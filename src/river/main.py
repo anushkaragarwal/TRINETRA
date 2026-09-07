@@ -1,7 +1,5 @@
-# TRINETRA - River Hydrology Pipeline
-
-from processor import process_dataframe, save_data
 from cwc_api import fetch_cwc_data
+from processor import process_dataframe
 
 
 if __name__ == "__main__":
@@ -10,9 +8,9 @@ if __name__ == "__main__":
     print("🌊 TRINETRA - River Hydrology Pipeline")
     print("=" * 70)
 
-    print("\n1️⃣ Fetching CWC data from NWDP API...")
-
     try:
+
+        print("\n1️⃣ Fetching CWC data from NWDP API...")
 
         api_df = fetch_cwc_data()
 
@@ -21,29 +19,33 @@ if __name__ == "__main__":
             f"{len(api_df)}"
         )
 
-        print("\n2️⃣ Processing API data...")
+        print("\n2️⃣ Processing CWC data...")
 
-        processed_df = process_dataframe(
+        river_data = process_dataframe(
             api_df
         )
 
-
-        print("\n3️⃣ Saving API-derived river features...")
-
-        save_data(processed_df)
-
         print(
-            "\n✅ API river pipeline completed successfully."
+            "\n3️⃣ River data ready for AI integration."
         )
 
         print(
-            f"📊 Final processed records: "
-            f"{len(processed_df)}"
+            f"📊 Final records: "
+            f"{len(river_data)}"
+        )
+
+        print("\n📋 Available columns:")
+
+        for column in river_data.columns:
+            print(f"   → {column}")
+
+        print(
+            "\n✅ RIVER DATA PIPELINE COMPLETED"
         )
 
     except Exception as e:
 
-        print("\n❌ CWC API pipeline failed:")
+        print("\n❌ River pipeline failed:")
 
         print(
             f"   {type(e).__name__}: {e}"

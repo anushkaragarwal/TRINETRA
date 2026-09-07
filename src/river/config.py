@@ -52,17 +52,16 @@ DISCHARGE_COLUMN = (
     "Telemetry Hourly River Water Discharge (m3/sec)"
 )
 
-# ---------------------------------------------------------
+# ------------------------------------------------------------
 # CWC API
-# ---------------------------------------------------------
+# ------------------------------------------------------------
 
 CWC_API_URL = (
     "https://nwdp.nwic.gov.in/api/3/action/datastore_search"
 )
 
-# 1970-2025 Uttarakhand CWC River Discharge resource
 CWC_RESOURCE_ID = (
-    "1b80bcae-de13-48ff-a08b-733a87167735"
+    "354a829b-d7ab-4dce-a8df-853bf70a8c4e"
 )
 
 CWC_API_TIMEOUT = 120
