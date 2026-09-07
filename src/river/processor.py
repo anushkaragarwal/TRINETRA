@@ -1,8 +1,6 @@
 import pandas as pd
 
 from config import (
-    RAW_DATA_PATH,
-    PROCESSED_DATA_PATH,
     MIN_LAT,
     MAX_LAT,
     MIN_LON,
@@ -15,22 +13,17 @@ from config import (
 )
 
 
-def load_data():
-    print("📂 Loading CWC river data...")
-
-    df = pd.read_csv(RAW_DATA_PATH)
-
-    print(f"✅ Loaded {len(df)} records")
-
-    return df
-
-
 def filter_mvp_area(df):
+    """
+    Keep only river observations inside the
+    TRINETRA MVP geographic region.
+    """
+
     print("\n📍 Filtering MVP area...")
 
     df = df.copy()
 
-    # API may return coordinates as strings
+    # Convert coordinates to numeric
     df[LATITUDE_COLUMN] = pd.to_numeric(
         df[LATITUDE_COLUMN],
         errors="coerce",
@@ -69,38 +62,60 @@ def filter_mvp_area(df):
 
 
 def clean_data(df):
-    print("\n🧹 Cleaning data...")
+    """
+    Clean and normalize CWC river observations.
+    """
+
+    print("\n🧹 Cleaning river data...")
 
     df = df.copy()
 
-    # Convert timestamp
+    # ---------------------------------------------------------
+    # Timestamp
+    # ---------------------------------------------------------
+
     df[TIME_COLUMN] = pd.to_datetime(
         df[TIME_COLUMN],
         errors="coerce",
     )
 
-    # Convert discharge to numeric
+    # ---------------------------------------------------------
+    # Discharge
+    # ---------------------------------------------------------
+
     df[DISCHARGE_COLUMN] = pd.to_numeric(
         df[DISCHARGE_COLUMN],
         errors="coerce",
     )
 
+    # ---------------------------------------------------------
     # Remove invalid timestamps
+    # ---------------------------------------------------------
+
     df = df.dropna(
         subset=[TIME_COLUMN]
     )
 
-    # Remove invalid discharge
+    # ---------------------------------------------------------
+    # Remove missing discharge
+    # ---------------------------------------------------------
+
     df = df.dropna(
         subset=[DISCHARGE_COLUMN]
     )
 
-    # Discharge cannot be negative
+    # ---------------------------------------------------------
+    # Remove physically invalid negative discharge
+    # ---------------------------------------------------------
+
     df = df[
         df[DISCHARGE_COLUMN] >= 0
     ]
 
-    # Sort chronologically
+    # ---------------------------------------------------------
+    # Sort by station and time
+    # ---------------------------------------------------------
+
     df = df.sort_values(
         by=[
             STATION_COLUMN,
@@ -108,7 +123,10 @@ def clean_data(df):
         ]
     )
 
+    # ---------------------------------------------------------
     # Remove duplicate observations
+    # ---------------------------------------------------------
+
     df = df.drop_duplicates(
         subset=[
             STATION_COLUMN,
@@ -124,12 +142,19 @@ def clean_data(df):
 
 
 def calculate_features(df):
-    print("\n📊 Calculating river features...")
+    """
+    Calculate basic hydrological features.
+
+    These are data/feature-engineering outputs,
+    not AI predictions.
+    """
+
+    print("\n📊 Calculating hydrological features...")
 
     df = df.copy()
 
     # ---------------------------------------------------------
-    # DISCHARGE CHANGE
+    # Change in discharge
     # ---------------------------------------------------------
 
     df["discharge_change_m3s"] = (
@@ -139,7 +164,7 @@ def calculate_features(df):
     )
 
     # ---------------------------------------------------------
-    # TIME DIFFERENCE
+    # Time difference
     # ---------------------------------------------------------
 
     df["time_difference_hours"] = (
@@ -152,7 +177,7 @@ def calculate_features(df):
     )
 
     # ---------------------------------------------------------
-    # RATE OF DISCHARGE CHANGE
+    # Rate of discharge change
     # ---------------------------------------------------------
 
     df["discharge_rate_m3s_per_hour"] = (
@@ -164,7 +189,11 @@ def calculate_features(df):
 
 
 def validate_data(df):
-    print("\n🔍 Validating processed data...")
+    """
+    Basic validation of the processed river data.
+    """
+
+    print("\n🔍 Validating river data...")
 
     print(
         f"Records          : {len(df)}"
@@ -211,27 +240,19 @@ def validate_data(df):
     print("\n✅ Validation completed")
 
 
-def save_data(df):
-    print("\n💾 Saving processed data...")
-
-    PROCESSED_DATA_PATH.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    df.to_csv(
-        PROCESSED_DATA_PATH,
-        index=False,
-    )
-
-    print(
-        f"✅ Saved processed data to:\n"
-        f"{PROCESSED_DATA_PATH}"
-    )
-
-
 def process_dataframe(df):
-    print("\n🌊 Processing river data...")
+    """
+    Complete River data-processing pipeline.
+
+    Input:
+        Raw CWC API DataFrame
+
+    Output:
+        Clean, spatially filtered,
+        feature-enriched DataFrame
+    """
+
+    print("\n🌊 Processing CWC river data...")
 
     df = filter_mvp_area(df)
 
@@ -240,15 +261,5 @@ def process_dataframe(df):
     df = calculate_features(df)
 
     validate_data(df)
-
-    return df
-
-
-def process():
-    df = load_data()
-
-    df = process_dataframe(df)
-
-    save_data(df)
 
     return df

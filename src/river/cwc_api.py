@@ -22,7 +22,6 @@ def fetch_cwc_batch(
     Fetch one batch of CWC records from the NWDP API.
     """
 
-    # NWDP expects filters as a JSON-encoded string
     filters = json.dumps({
         "State": CWC_STATE,
         "District": CWC_DISTRICT,
