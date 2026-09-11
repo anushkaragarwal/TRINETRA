@@ -1,13 +1,15 @@
 # Python cache
 __pycache__/
 *.py[cod]
+*.pyo
 
 # Virtual environments
 .venv/
 venv/
 env/
+ENV/
 
-# Secrets
+# Secrets and environment files
 .env
 .env.*
 !.env.example
@@ -16,14 +18,14 @@ credentials/
 *.pem
 *.key
 
-# IDE
+# IDE and editor files
 .vscode/
 .idea/
 
 # Jupyter
 .ipynb_checkpoints/
 
-# System files
+# Operating system files
 .DS_Store
 Thumbs.db
 
@@ -31,8 +33,36 @@ Thumbs.db
 *.log
 *.tmp
 *.temp
+*.swp
 
 # Local databases
 *.db
 *.sqlite
 *.sqlite3
+
+# Node / frontend dependencies
+node_modules/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Frontend environment files
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# Build and coverage output
+dist/
+build/
+coverage/
+htmlcov/
+
+# Python test and tooling cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local generated files
+downloads/
+tmp/
+temp/
