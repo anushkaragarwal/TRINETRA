@@ -1,15 +1,20 @@
-# TRINETRA configuration
+# TRINETRA Satellite Configuration
 
-CATALOGUE_URL = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
+CATALOGUE_URL = (
+    "https://catalogue.dataspace.copernicus.eu/"
+    "odata/v1/Products"
+)
 
-# Final TRINETRA monitoring region
+# TRINETRA MVP monitoring area
 REGION_NAME = "Joshimath–Vishnuprayag–Badrinath Corridor"
 
 MIN_LAT = 30.50
 MAX_LAT = 30.80
+
 MIN_LON = 79.40
 MAX_LON = 79.75
 
+# Copernicus OData geometry (longitude latitude order)
 AOI = (
     f"POLYGON(("
     f"{MIN_LON} {MIN_LAT},"
@@ -20,6 +25,9 @@ AOI = (
     f"))"
 )
 
-MAX_CLOUD_COVER = 40
-SEARCH_DAYS = 40
+# Metadata search controls
+SEARCH_DAYS = 90
 MAX_PRODUCTS = 20
+
+# Used later for Sentinel-2 optical imagery only
+MAX_CLOUD_COVER = 40

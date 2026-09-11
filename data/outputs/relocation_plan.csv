@@ -1,0 +1,9 @@
+source_habitation,source_zone,source_priority_score,source_population_2026_est,planned_evacuation_share,people_to_relocate,host_cluster,allocated_people,host_verification_status,allocation_status,recommended_action
+Joshimath  (NPP),RED,96.0,19689,0.3,5907,Host Cluster A — Safe Zone North,2000,PROVISIONAL — DDMA/USDMA verification required,ALLOCATED,Prioritize vulnerable households; prepare transport and temporary shelter allocation
+Joshimath  (NPP),RED,96.0,19689,0.3,5907,Host Cluster B — Safe Zone Central,2500,PROVISIONAL — DDMA/USDMA verification required,ALLOCATED,Prioritize vulnerable households; prepare transport and temporary shelter allocation
+Joshimath  (NPP),RED,96.0,19689,0.3,5907,Host Cluster C — Safe Zone South,1407,PROVISIONAL — DDMA/USDMA verification required,ALLOCATED,Prioritize vulnerable households; prepare transport and temporary shelter allocation
+Badrinathpuri (NP),RED,77.42,2873,0.3,862,Host Cluster C — Safe Zone South,593,PROVISIONAL — DDMA/USDMA verification required,ALLOCATED,Prioritize vulnerable households; prepare transport and temporary shelter allocation
+Badrinathpuri (NP),RED,77.42,2873,0.3,862,Host Cluster D — Reserve Capacity,269,PROVISIONAL — DDMA/USDMA verification required,ALLOCATED,Prioritize vulnerable households; prepare transport and temporary shelter allocation
+Pandukaswar,RED,76.17,1645,0.3,494,Host Cluster D — Reserve Capacity,494,PROVISIONAL — DDMA/USDMA verification required,ALLOCATED,Prioritize vulnerable households; prepare transport and temporary shelter allocation
+Topovan,RED,75.77,1254,0.3,376,Host Cluster D — Reserve Capacity,376,PROVISIONAL — DDMA/USDMA verification required,ALLOCATED,Prioritize vulnerable households; prepare transport and temporary shelter allocation
+Malari,RED,75.31,2278,0.3,683,Host Cluster D — Reserve Capacity,361,PROVISIONAL — DDMA/USDMA verification required,ALLOCATED,Prioritize vulnerable households; prepare transport and temporary shelter allocation
