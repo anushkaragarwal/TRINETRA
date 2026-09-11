@@ -1,9 +1,8 @@
-
 import json
 import requests
 import pandas as pd
 
-from config import (
+from .config import (
     CWC_API_URL,
     CWC_RESOURCE_ID,
     CWC_API_TIMEOUT,
@@ -15,13 +14,14 @@ from config import (
 
 
 def fetch_cwc_batch(
-    offset=0,
-    limit=CWC_BATCH_SIZE,
+    offset: int = 0,
+    limit: int = CWC_BATCH_SIZE,
 ):
     """
     Fetch one batch of CWC records from the NWDP API.
     """
 
+    # Filters for NWDP datastore_search API
     filters = json.dumps({
         "State": CWC_STATE,
         "District": CWC_DISTRICT,
@@ -71,7 +71,7 @@ def fetch_cwc_batch(
 
 
 def fetch_all_cwc_data(
-    batch_size=CWC_BATCH_SIZE,
+    batch_size: int = CWC_BATCH_SIZE,
 ):
     """
     Fetch all available CWC records in batches.
@@ -81,7 +81,6 @@ def fetch_all_cwc_data(
     offset = 0
 
     while True:
-
         records, total = fetch_cwc_batch(
             offset=offset,
             limit=batch_size,
@@ -91,7 +90,6 @@ def fetch_all_cwc_data(
             break
 
         all_records.extend(records)
-
         offset += len(records)
 
         print(

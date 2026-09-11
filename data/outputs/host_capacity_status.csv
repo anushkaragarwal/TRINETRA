@@ -1,0 +1,5 @@
+host_cluster,temporary_capacity,verification_status,allocated_people,remaining_capacity,capacity_utilisation_pct
+Host Cluster A — Safe Zone North,2000,PROVISIONAL — DDMA/USDMA verification required,2000,0,100.0
+Host Cluster B — Safe Zone Central,2500,PROVISIONAL — DDMA/USDMA verification required,2500,0,100.0
+Host Cluster C — Safe Zone South,2000,PROVISIONAL — DDMA/USDMA verification required,2000,0,100.0
+Host Cluster D — Reserve Capacity,1500,PROVISIONAL — DDMA/USDMA verification required,1500,0,100.0
