@@ -27,9 +27,38 @@ SENTINEL2_IMAGE_PATH = (
 )
 
 
+# ------------------------------------------------------------
+# Rainfall dashboard data
+# ------------------------------------------------------------
+
+RAINFALL_HAZARD_PATH = (
+    ROOT
+    / "data"
+    / "rainfall"
+    / "processed"
+    / "rainfall_hybrid_hazard.csv"
+)
+
+RAINFALL_FORECAST_PATH = (
+    ROOT
+    / "data"
+    / "rainfall"
+    / "processed"
+    / "rainfall_forecast_predictions.csv"
+)
+
+RAINFALL_DAILY_RISK_PATH = (
+    ROOT
+    / "data"
+    / "rainfall"
+    / "processed"
+    / "rainfall_risk_daily.csv"
+)
+
+
 st.set_page_config(
-    page_title="TRINETRA | River Hazard Dashboard",
-    page_icon="🌊",
+    page_title="TRINETRA | River + Rainfall Hazard Dashboard",
+    page_icon="🌊🌧️",
     layout="wide",
 )
 
@@ -69,12 +98,41 @@ def load_data():
     return pd.read_csv(DATA_PATH)
 
 
+@st.cache_data
+def load_rainfall_hazard():
+
+    return pd.read_csv(
+        RAINFALL_HAZARD_PATH,
+        parse_dates=["Date"],
+    )
+
+
+@st.cache_data
+def load_rainfall_forecast():
+
+    return pd.read_csv(
+        RAINFALL_FORECAST_PATH,
+        parse_dates=["Date"],
+    )
+
+
+@st.cache_data
+def load_rainfall_daily_risk():
+
+    return pd.read_csv(
+        RAINFALL_DAILY_RISK_PATH,
+        parse_dates=["date"],
+    )
+
+
 def main():
-    st.title("🌊 TRINETRA")
+
+    st.title("🌊🌧️ TRINETRA")
 
     st.caption(
-        "Explainable river-hazard assessment using hydrological "
-        "signals and independent satellite evidence."
+        "Integrated river and rainfall hazard assessment "
+        "using hydrological signals, rainfall intelligence, "
+        "and independent satellite evidence."
     )
 
     if not DATA_PATH.exists():
@@ -88,7 +146,11 @@ def main():
     df = load_data()
 
     if df.empty:
-        st.error("The dashboard data file is empty.")
+
+        st.error(
+            "The dashboard data file is empty."
+        )
+
         st.stop()
 
     event = df.iloc[0]
@@ -115,7 +177,8 @@ def main():
 
     st.divider()
 
-    st.subheader("Selected Event")
+    st.subheader("🌊 Selected River Event")
+
 
     left, right = st.columns(2)
 
@@ -146,7 +209,10 @@ def main():
 
     st.divider()
 
-    st.subheader("Risk and Satellite Evidence")
+    st.subheader(
+        "Risk and Satellite Evidence"
+    )
+
 
     col1, col2, col3 = st.columns(3)
 
@@ -200,7 +266,7 @@ def main():
                 font-weight: bold;
                 margin-top: 8px;
             ">
-                INCONCLUSIVE
+                {satellite_class}
             </div>
             """,
             unsafe_allow_html=True,
@@ -245,7 +311,11 @@ def main():
     s2_col, s1_col = st.columns(2)
 
     with s2_col:
-        st.markdown("### Sentinel-2 Optical Evidence")
+
+        st.markdown(
+            "### Sentinel-2 Optical Evidence"
+        )
+
 
         st.metric(
             "Candidate New Water",
@@ -265,7 +335,11 @@ def main():
         )
 
     with s1_col:
-        st.markdown("### Sentinel-1 SAR Evidence")
+
+        st.markdown(
+            "### Sentinel-1 SAR Evidence"
+        )
+
 
         st.metric(
             "Mean VV Backscatter Change",
@@ -297,7 +371,11 @@ def main():
     image_col1, image_col2 = st.columns(2)
 
     with image_col1:
-        st.markdown("### Sentinel-1 SAR Analysis")
+
+        st.markdown(
+            "### Sentinel-1 SAR Analysis"
+        )
+
 
         if SENTINEL1_IMAGE_PATH.exists():
             st.image(
@@ -315,7 +393,11 @@ def main():
             )
 
     with image_col2:
-        st.markdown("### Sentinel-2 Optical Analysis")
+
+        st.markdown(
+            "### Sentinel-2 Optical Analysis"
+        )
+
 
         if SENTINEL2_IMAGE_PATH.exists():
             st.image(
@@ -377,7 +459,11 @@ def main():
 
     st.divider()
 
-    with st.expander("View complete dashboard data"):
+
+    with st.expander(
+        "View complete river dashboard data"
+    ):
+
         st.dataframe(
             df,
             use_container_width=True,
@@ -390,6 +476,569 @@ def main():
         "official emergency-alert system."
     )
 
+
+    # ========================================================
+    # RAINFALL HAZARD DASHBOARD
+    # ========================================================
+
+    st.divider()
+
+    st.title("🌧️ Rainfall Hazard Assessment")
+
+
+    st.caption(
+        "Explainable rainfall-hazard assessment using observed "
+        "rainfall, anomaly detection, and next-day forecasting."
+    )
+
+
+    # --------------------------------------------------------
+    # Check rainfall files
+    # --------------------------------------------------------
+
+    rainfall_files = [
+        RAINFALL_HAZARD_PATH,
+        RAINFALL_FORECAST_PATH,
+        RAINFALL_DAILY_RISK_PATH,
+    ]
+
+
+    missing_rainfall_files = [
+        path
+        for path in rainfall_files
+        if not path.exists()
+    ]
+
+
+    if missing_rainfall_files:
+
+        st.warning(
+            "Rainfall dashboard data is incomplete. "
+            "Run the rainfall pipeline scripts first."
+        )
+
+
+        for path in missing_rainfall_files:
+
+            st.write(
+                f"Missing: `{path}`"
+            )
+
+
+    else:
+
+        rainfall_hazard = load_rainfall_hazard()
+
+        rainfall_forecast = load_rainfall_forecast()
+
+        rainfall_daily = load_rainfall_daily_risk()
+
+
+        if (
+            rainfall_hazard.empty
+            or rainfall_forecast.empty
+        ):
+
+            st.warning(
+                "Rainfall dashboard data is empty."
+            )
+
+
+        else:
+
+            # =================================================
+            # LATEST RAINFALL OBSERVATION
+            # =================================================
+
+            latest_rainfall = (
+                rainfall_hazard
+                .sort_values("Date")
+                .groupby(
+                    "District",
+                    as_index=False,
+                )
+                .tail(1)
+                .iloc[0]
+            )
+
+
+            district = str(
+                latest_rainfall["District"]
+            )
+
+
+            latest_date = pd.to_datetime(
+                latest_rainfall["Date"]
+            )
+
+
+            daily_rainfall = float(
+                latest_rainfall["Daily Actual"]
+            )
+
+
+            rainfall_risk_score = float(
+                latest_rainfall["risk_score"]
+            )
+
+
+            rainfall_risk_category = str(
+                latest_rainfall["risk_category"]
+            )
+
+
+            anomaly_severity = float(
+                latest_rainfall["anomaly_severity"]
+            )
+
+
+            # =================================================
+            # LATEST OPERATIONAL FORECAST
+            # =================================================
+
+            district_forecast = (
+                rainfall_forecast[
+                    rainfall_forecast["District"]
+                    == district
+                ]
+                .sort_values("Date")
+            )
+
+
+            operational_forecast = (
+                district_forecast[
+                    district_forecast[
+                        "target_rainfall_1d"
+                    ].isna()
+                ]
+                .tail(1)
+            )
+
+
+            if not operational_forecast.empty:
+
+                forecast_row = (
+                    operational_forecast.iloc[0]
+                )
+
+
+                forecast_rainfall = float(
+                    forecast_row[
+                        "predicted_rainfall_1d"
+                    ]
+                )
+
+
+                forecast_date = (
+                    pd.to_datetime(
+                        forecast_row["Date"]
+                    )
+                    + pd.Timedelta(days=1)
+                )
+
+
+            else:
+
+                forecast_rainfall = None
+
+                forecast_date = None
+
+
+            # =================================================
+            # FORECAST SEVERITY
+            # =================================================
+
+            historical_rainfall = (
+                rainfall_hazard[
+                    "Daily Actual"
+                ]
+                .dropna()
+            )
+
+
+            q75 = historical_rainfall.quantile(
+                0.75
+            )
+
+
+            q90 = historical_rainfall.quantile(
+                0.90
+            )
+
+
+            q95 = historical_rainfall.quantile(
+                0.95
+            )
+
+
+            if forecast_rainfall is None:
+
+                forecast_severity = 0
+
+
+            elif forecast_rainfall >= q95:
+
+                forecast_severity = 100
+
+
+            elif forecast_rainfall >= q90:
+
+                forecast_severity = 70
+
+
+            elif forecast_rainfall >= q75:
+
+                forecast_severity = 40
+
+
+            else:
+
+                forecast_severity = 10
+
+
+            # =================================================
+            # NEXT-DAY OPERATIONAL HAZARD
+            # =================================================
+
+            operational_hazard_score = (
+                0.50 * rainfall_risk_score
+                + 0.25 * anomaly_severity
+                + 0.25 * forecast_severity
+            )
+
+
+            if operational_hazard_score < 30:
+
+                operational_hazard_category = "LOW"
+
+
+            elif operational_hazard_score < 60:
+
+                operational_hazard_category = "MODERATE"
+
+
+            elif operational_hazard_score < 80:
+
+                operational_hazard_category = "HIGH"
+
+
+            else:
+
+                operational_hazard_category = "CRITICAL"
+
+
+            # =================================================
+            # SELECTED RAINFALL EVENT
+            # =================================================
+
+            st.subheader(
+                "Selected Rainfall Event"
+            )
+
+
+            rainfall_left, rainfall_right = (
+                st.columns(2)
+            )
+
+
+            with rainfall_left:
+
+                st.write(
+                    f"**District:** {district}"
+                )
+
+
+                st.write(
+                    f"**Latest observation:** "
+                    f"{latest_date.strftime('%d %B %Y')}"
+                )
+
+
+            with rainfall_right:
+
+                st.write(
+                    f"**Daily rainfall:** "
+                    f"{daily_rainfall:.1f} mm"
+                )
+
+
+                if forecast_date is not None:
+
+                    st.write(
+                        f"**Forecast date:** "
+                        f"{forecast_date.strftime('%d %B %Y')}"
+                    )
+
+
+            # =================================================
+            # CURRENT RAINFALL RISK
+            # =================================================
+
+            st.subheader(
+                "Current Rainfall Risk"
+            )
+
+
+            col1, col2, col3 = (
+                st.columns(3)
+            )
+
+
+            # -------------------------------------------------
+            # Rainfall risk
+            # -------------------------------------------------
+
+            with col1:
+
+                st.metric(
+                    "Rainfall Risk Score",
+                    f"{rainfall_risk_score:.0f} / 100",
+                    border=True,
+                )
+
+
+                st.markdown(
+                    f"""
+                    <div style="
+                        background-color:
+                        {risk_color(rainfall_risk_category)};
+                        color: white;
+                        padding: 10px;
+                        border-radius: 8px;
+                        text-align: center;
+                        font-weight: bold;
+                        margin-top: 8px;
+                    ">
+                        {rainfall_risk_category}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+
+            # -------------------------------------------------
+            # Anomaly severity
+            # -------------------------------------------------
+
+            with col2:
+
+                st.metric(
+                    "Anomaly Severity",
+                    f"{anomaly_severity:.0f} / 100",
+                    border=True,
+                )
+
+
+            # -------------------------------------------------
+            # Observed rainfall
+            # -------------------------------------------------
+
+            with col3:
+
+                st.metric(
+                    "Observed Rainfall",
+                    f"{daily_rainfall:.1f} mm",
+                    border=True,
+                )
+
+
+            # =================================================
+            # NEXT-DAY FORECAST
+            # =================================================
+
+            st.subheader(
+                "Next-Day Rainfall Forecast"
+            )
+
+
+            forecast_col1, forecast_col2, forecast_col3 = (
+                st.columns(3)
+            )
+
+
+            # -------------------------------------------------
+            # Predicted rainfall
+            # -------------------------------------------------
+
+            with forecast_col1:
+
+                if forecast_rainfall is not None:
+
+                    st.metric(
+                        "Predicted Rainfall",
+                        f"{forecast_rainfall:.2f} mm",
+                        border=True,
+                    )
+
+                else:
+
+                    st.metric(
+                        "Predicted Rainfall",
+                        "N/A",
+                        border=True,
+                    )
+
+
+            # -------------------------------------------------
+            # Forecast severity
+            # -------------------------------------------------
+
+            with forecast_col2:
+
+                st.metric(
+                    "Forecast Severity",
+                    f"{forecast_severity:.0f} / 100",
+                    border=True,
+                )
+
+
+            # -------------------------------------------------
+            # Next-day hazard
+            # -------------------------------------------------
+
+            with forecast_col3:
+
+                st.metric(
+                    "Next-Day Hazard",
+                    f"{operational_hazard_score:.1f} / 100",
+                    border=True,
+                )
+
+
+            st.markdown(
+                f"""
+                <div style="
+                    background-color:
+                    {risk_color(operational_hazard_category)};
+                    color: white;
+                    padding: 12px;
+                    border-radius: 8px;
+                    text-align: center;
+                    font-weight: bold;
+                    margin-top: 8px;
+                ">
+                    NEXT-DAY HAZARD: {operational_hazard_category}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+
+            # =================================================
+            # RAINFALL INTERPRETATION
+            # =================================================
+
+            st.subheader(
+                "Rainfall System Interpretation"
+            )
+
+
+            if forecast_rainfall is not None:
+
+                forecast_text = (
+                    f"{forecast_rainfall:.2f} mm"
+                )
+
+            else:
+
+                forecast_text = "N/A"
+
+
+            st.info(
+                f"""
+                **{district} rainfall condition:**
+
+                The latest observed rainfall was
+                **{daily_rainfall:.1f} mm**, producing a current
+                rainfall risk score of
+                **{rainfall_risk_score:.0f}/100
+                ({rainfall_risk_category})**.
+
+                The anomaly severity is
+                **{anomaly_severity:.0f}/100**.
+
+                The operational model forecasts
+                **{forecast_text}**
+                for the next day.
+
+                Combining current risk, anomaly severity, and the
+                forecast produces a next-day hybrid hazard score of
+                **{operational_hazard_score:.1f}/100
+                ({operational_hazard_category})**.
+                """
+            )
+
+
+            # =================================================
+            # RECENT RAINFALL RISK
+            # =================================================
+
+            st.subheader(
+                "Recent Rainfall Risk"
+            )
+
+
+            recent_daily = (
+                rainfall_daily[
+                    rainfall_daily["District"]
+                    == district
+                ]
+                .sort_values("date")
+                .tail(10)
+            )
+
+
+            if not recent_daily.empty:
+
+                display_columns = [
+                    "date",
+                    "max_daily_rainfall_mm",
+                    "max_risk_score",
+                    "risk_category",
+                ]
+
+
+                st.dataframe(
+                    recent_daily[
+                        display_columns
+                    ],
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
+
+            # =================================================
+            # COMPLETE RAINFALL DATA
+            # =================================================
+
+            with st.expander(
+                "View complete rainfall hazard data"
+            ):
+
+                st.dataframe(
+                    rainfall_hazard,
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
+
+    # ========================================================
+    # APPLICATION FOOTER
+    # ========================================================
+
+    st.divider()
+
+    st.caption(
+        "TRINETRA integrates river hydrology, rainfall "
+        "intelligence, and satellite-derived evidence as an "
+        "academic disaster-risk assessment prototype. "
+        "It is not an official emergency-alert system."
+    )
+
+
+# ============================================================
+# ENTRY POINT
+# ============================================================
 
 if __name__ == "__main__":
     main()
