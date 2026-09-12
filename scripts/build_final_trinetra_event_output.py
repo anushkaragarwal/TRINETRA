@@ -1,4 +1,5 @@
 from pathlib import Path
+import numpy as np
 import pandas as pd
 
 
@@ -19,12 +20,30 @@ SATELLITE_PATH = (
     / "gee_satellite_evidence_summary.csv"
 )
 
+TERRAIN_PATH = (
+    ROOT
+    / "data"
+    / "features"
+    / "terrain_hazard_features.csv"
+)
+
 OUTPUT_PATH = (
     ROOT
     / "data"
     / "outputs"
     / "trinetra_event_dashboard_data.csv"
 )
+
+
+# =========================================================
+# TRINETRA MVP HAZARD INTEGRATION
+# =========================================================
+
+HYDRO_WEIGHT = 0.70
+TERRAIN_WEIGHT = 0.30
+
+# Local terrain context around the event
+TERRAIN_RADIUS_KM = 1.0
 
 
 def find_column(df, candidates):
@@ -40,13 +59,134 @@ def find_column(df, candidates):
     return None
 
 
-def main():
-    river_df = pd.read_csv(RIVER_HAZARD_PATH)
-    satellite_df = pd.read_csv(SATELLITE_PATH)
+def classify_risk(score):
 
-    print("📥 Loading TRINETRA input files...")
-    print(f"River rows     : {len(river_df)}")
-    print(f"Satellite rows : {len(satellite_df)}")
+    if score >= 90:
+        return "CRITICAL"
+
+    elif score >= 75:
+        return "HIGH"
+
+    elif score >= 50:
+        return "MODERATE"
+
+    elif score >= 25:
+        return "LOW"
+
+    else:
+        return "VERY LOW"
+
+
+def get_local_terrain(
+    terrain_df,
+    event_lat,
+    event_lon,
+):
+    """
+    Extract DEM-derived terrain information
+    from approximately 1 km around the event.
+    """
+
+    km_lat = TERRAIN_RADIUS_KM / 111.0
+
+    km_lon = TERRAIN_RADIUS_KM / (
+        111.0
+        * np.cos(np.radians(event_lat))
+    )
+
+    mask = (
+        (terrain_df["lat"] >= event_lat - km_lat)
+        &
+        (terrain_df["lat"] <= event_lat + km_lat)
+        &
+        (terrain_df["lon"] >= event_lon - km_lon)
+        &
+        (terrain_df["lon"] <= event_lon + km_lon)
+    )
+
+    local = terrain_df.loc[mask].copy()
+
+    if local.empty:
+        raise ValueError(
+            "No DEM terrain cells found around "
+            "the event location."
+        )
+
+    terrain_score = float(
+        local["terrain_hazard_score"].median()
+    )
+
+    terrain_max = float(
+        local["terrain_hazard_score"].max()
+    )
+
+    slope_median = float(
+        local["slope"].median()
+    )
+
+    slope_max = float(
+        local["slope"].max()
+    )
+
+    elevation_median = float(
+        local["elevation"].median()
+    )
+
+    return {
+        "terrain_hazard_score_0_100":
+            terrain_score,
+
+        "terrain_hazard_max_score_0_100":
+            terrain_max,
+
+        "terrain_hazard_level":
+            classify_risk(terrain_score),
+
+        "terrain_slope_median_deg":
+            slope_median,
+
+        "terrain_slope_max_deg":
+            slope_max,
+
+        "terrain_elevation_median_m":
+            elevation_median,
+
+        "terrain_cells_used":
+            len(local),
+    }
+
+
+def main():
+
+    print("Loading TRINETRA input files...")
+
+    river_df = pd.read_csv(
+        RIVER_HAZARD_PATH
+    )
+
+    satellite_df = pd.read_csv(
+        SATELLITE_PATH
+    )
+
+    terrain_df = pd.read_csv(
+        TERRAIN_PATH
+    )
+
+    print(
+        f"River rows     : {len(river_df)}"
+    )
+
+    print(
+        f"Satellite rows : {len(satellite_df)}"
+    )
+
+    print(
+        f"Terrain rows   : {len(terrain_df)}"
+    )
+
+    # =====================================================
+    # FIND RIVER COLUMNS
+    # =====================================================
 
     station_column = find_column(
         river_df,
@@ -55,23 +195,6 @@ def main():
             "station",
             "site_name",
             "location_name",
-        ],
-    )
-
-    latitude_column = find_column(
-        river_df,
-        [
-            "latitude",
-            "lat",
-        ],
-    )
-
-    longitude_column = find_column(
-        river_df,
-        [
-            "longitude",
-            "lon",
-            "lng",
         ],
     )
 
@@ -94,30 +217,34 @@ def main():
         ],
     )
 
-    print("\n🔎 River columns detected:")
-    print(f"Station column : {station_column}")
-    print(f"Latitude column: {latitude_column}")
-    print(f"Longitude col. : {longitude_column}")
-    print(f"Score column   : {hazard_score_column}")
-    print(f"Level column   : {risk_level_column}")
-
     if station_column is None:
         raise ValueError(
-            "Could not identify a station-name column in "
-            "river_hybrid_hazard.csv."
+            "Could not identify station-name column."
         )
+
+    if hazard_score_column is None:
+        raise ValueError(
+            "Could not identify river hazard score column."
+        )
+
+    # =====================================================
+    # SATELLITE EVENT
+    # =====================================================
 
     satellite_row = satellite_df.iloc[0].copy()
 
-    satellite_lat = float(
+    event_lat = float(
         satellite_row["latitude"]
     )
 
-    satellite_lon = float(
+    event_lon = float(
         satellite_row["longitude"]
     )
 
-    # First try matching by station name.
+    # =====================================================
+    # MATCH LAMBAGARH RIVER EVENT
+    # =====================================================
+
     river_df["_station_normalized"] = (
         river_df[station_column]
         .astype(str)
@@ -131,8 +258,7 @@ def main():
     ]
 
     matched = river_df[
-        river_df["_station_normalized"]
-        .apply(
+        river_df["_station_normalized"].apply(
             lambda value: any(
                 term in value
                 for term in target_station_terms
@@ -140,116 +266,223 @@ def main():
         )
     ].copy()
 
-    # If station-name matching finds nothing, match by coordinates.
-    if matched.empty and latitude_column and longitude_column:
-        river_df["_distance"] = (
-            (
-                pd.to_numeric(
-                    river_df[latitude_column],
-                    errors="coerce",
-                )
-                - satellite_lat
-            ).abs()
-            +
-            (
-                pd.to_numeric(
-                    river_df[longitude_column],
-                    errors="coerce",
-                )
-                - satellite_lon
-            ).abs()
-        )
-
-        matched = river_df.nsmallest(
-            1,
-            "_distance",
-        ).copy()
-
-        print(
-            "\n⚠️ Station-name match was not found. "
-            "Using nearest coordinate match."
-        )
-
     if matched.empty:
         raise ValueError(
-            "No matching river record could be found for "
-            "the satellite evidence event."
+            "No Lambagarh river record found."
         )
 
-    # Choose highest hazard row if several Lambagarh rows exist.
-    if hazard_score_column:
-        matched[hazard_score_column] = pd.to_numeric(
-            matched[hazard_score_column],
-            errors="coerce",
-        )
+    matched[hazard_score_column] = pd.to_numeric(
+        matched[hazard_score_column],
+        errors="coerce",
+    )
 
-        selected_river_row = matched.sort_values(
+    selected_river_row = (
+        matched
+        .sort_values(
             by=hazard_score_column,
             ascending=False,
-        ).iloc[0]
+        )
+        .iloc[0]
+    )
+
+    hydrological_score = float(
+        selected_river_row[
+            hazard_score_column
+        ]
+    )
+
+    if risk_level_column:
+
+        hydrological_level = str(
+            selected_river_row[
+                risk_level_column
+            ]
+        )
 
     else:
-        selected_river_row = matched.iloc[0]
 
-    hydrological_score = (
-        float(selected_river_row[hazard_score_column])
-        if hazard_score_column
-        else None
+        hydrological_level = classify_risk(
+            hydrological_score
+        )
+
+    # =====================================================
+    # DEM INTEGRATION
+    # =====================================================
+
+    terrain = get_local_terrain(
+        terrain_df,
+        event_lat,
+        event_lon,
     )
 
-    hydrological_level = (
-        str(selected_river_row[risk_level_column])
-        if risk_level_column
-        else "UNKNOWN"
+    terrain_score = terrain[
+        "terrain_hazard_score_0_100"
+    ]
+
+    # =====================================================
+    # FINAL TRINETRA HAZARD SCORE
+    # =====================================================
+
+    trinetra_hazard_score = (
+        HYDRO_WEIGHT
+        * hydrological_score
+        +
+        TERRAIN_WEIGHT
+        * terrain_score
     )
+
+    trinetra_hazard_score = float(
+        np.clip(
+            trinetra_hazard_score,
+            0,
+            100,
+        )
+    )
+
+    trinetra_hazard_level = classify_risk(
+        trinetra_hazard_score
+    )
+
+    # =====================================================
+    # SATELLITE EVIDENCE
+    # =====================================================
+
+    satellite_score = float(
+        satellite_row[
+            "satellite_evidence_score_0_100"
+        ]
+    )
+
+    # =====================================================
+    # FINAL DASHBOARD DATA
+    # =====================================================
 
     dashboard_row = {
-        "event_id": satellite_row["event_id"],
-        "station_name": satellite_row["station_name"],
-        "event_time_ist": satellite_row["event_time_ist"],
-        "latitude": satellite_lat,
-        "longitude": satellite_lon,
 
-        "hydrological_risk_score_0_100": hydrological_score,
-        "hydrological_risk_level": hydrological_level,
+        "event_id":
+            satellite_row["event_id"],
 
-        "satellite_evidence_score_0_100": float(
-            satellite_row[
-                "satellite_evidence_score_0_100"
-            ]
-        ),
-        "satellite_evidence_class": satellite_row[
-            "satellite_evidence_class"
-        ],
-        "satellite_evidence_status": satellite_row[
-            "satellite_evidence_status"
-        ],
+        "station_name":
+            satellite_row["station_name"],
 
-        "sentinel2_candidate_new_water_ha": float(
+        "event_time_ist":
+            satellite_row["event_time_ist"],
+
+        "latitude":
+            event_lat,
+
+        "longitude":
+            event_lon,
+
+        # -----------------------------
+        # HYDROLOGICAL
+        # -----------------------------
+
+        "hydrological_risk_score_0_100":
+            hydrological_score,
+
+        "hydrological_risk_level":
+            hydrological_level,
+
+        # -----------------------------
+        # DEM / TERRAIN
+        # -----------------------------
+
+        "terrain_hazard_score_0_100":
+            terrain_score,
+
+        "terrain_hazard_max_score_0_100":
+            terrain[
+                "terrain_hazard_max_score_0_100"
+            ],
+
+        "terrain_hazard_level":
+            terrain[
+                "terrain_hazard_level"
+            ],
+
+        "terrain_slope_median_deg":
+            terrain[
+                "terrain_slope_median_deg"
+            ],
+
+        "terrain_slope_max_deg":
+            terrain[
+                "terrain_slope_max_deg"
+            ],
+
+        "terrain_elevation_median_m":
+            terrain[
+                "terrain_elevation_median_m"
+            ],
+
+        "terrain_cells_used":
+            terrain[
+                "terrain_cells_used"
+            ],
+
+        # -----------------------------
+        # FINAL TRINETRA
+        # -----------------------------
+
+        "trinetra_hazard_score_0_100":
+            trinetra_hazard_score,
+
+        "trinetra_hazard_level":
+            trinetra_hazard_level,
+
+        # -----------------------------
+        # SATELLITE EVIDENCE
+        # -----------------------------
+
+        "satellite_evidence_score_0_100":
+            satellite_score,
+
+        "satellite_evidence_class":
             satellite_row[
-                "sentinel2_candidate_new_water_ha"
-            ]
-        ),
-        "sentinel2_net_water_change_ha": float(
+                "satellite_evidence_class"
+            ],
+
+        "satellite_evidence_status":
             satellite_row[
-                "sentinel2_net_water_change_ha"
-            ]
-        ),
-        "sentinel1_mean_vv_change_db": float(
-            satellite_row[
-                "sentinel1_mean_vv_change_db"
-            ]
-        ),
-        "sentinel1_candidate_new_water_ha": float(
-            satellite_row[
-                "sentinel1_candidate_new_water_ha"
-            ]
-        ),
+                "satellite_evidence_status"
+            ],
+
+        "sentinel2_candidate_new_water_ha":
+            float(
+                satellite_row[
+                    "sentinel2_candidate_new_water_ha"
+                ]
+            ),
+
+        "sentinel2_net_water_change_ha":
+            float(
+                satellite_row[
+                    "sentinel2_net_water_change_ha"
+                ]
+            ),
+
+        "sentinel1_mean_vv_change_db":
+            float(
+                satellite_row[
+                    "sentinel1_mean_vv_change_db"
+                ]
+            ),
+
+        "sentinel1_candidate_new_water_ha":
+            float(
+                satellite_row[
+                    "sentinel1_candidate_new_water_ha"
+                ]
+            ),
 
         "system_interpretation": (
-            "Hydrological indicators and satellite evidence "
-            "are displayed separately. High river risk does not "
-            "automatically mean satellite-confirmed flooding."
+            "TRINETRA combines dynamic "
+            "hydrological hazard with "
+            "local DEM-derived terrain "
+            "hazard. Satellite observations "
+            "are retained separately as "
+            "supporting post-event evidence."
         ),
     }
 
@@ -267,15 +500,53 @@ def main():
         index=False,
     )
 
-    print("\n✅ Final TRINETRA dashboard dataset created.")
-    print(f"Output: {OUTPUT_PATH}")
+    # =====================================================
+    # FINAL REPORT
+    # =====================================================
 
-    print("\n📊 Final event summary:")
+    print()
+    print("=" * 60)
+    print("TRINETRA DEM INTEGRATION COMPLETE")
+    print("=" * 60)
+
     print(
-        output_df.T.to_string(
-            header=False
-        )
+        f"Event location     : "
+        f"{event_lat:.6f}, {event_lon:.6f}"
     )
+
+    print(
+        f"Hydrological score : "
+        f"{hydrological_score:.2f}"
+    )
+
+    print(
+        f"Terrain score      : "
+        f"{terrain_score:.2f}"
+    )
+
+    print(
+        f"Terrain max        : "
+        f"{terrain['terrain_hazard_max_score_0_100']:.2f}"
+    )
+
+    print(
+        f"Terrain cells      : "
+        f"{terrain['terrain_cells_used']}"
+    )
+
+    print(
+        f"TRINETRA score     : "
+        f"{trinetra_hazard_score:.2f}"
+    )
+
+    print(
+        f"TRINETRA level     : "
+        f"{trinetra_hazard_level}"
+    )
+
+    print()
+    print("Saved:")
+    print(OUTPUT_PATH)
 
 
 if __name__ == "__main__":

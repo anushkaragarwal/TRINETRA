@@ -130,9 +130,9 @@ def main():
     st.title("🌊🌧️ TRINETRA")
 
     st.caption(
-        "Integrated river and rainfall hazard assessment "
-        "using hydrological signals, rainfall intelligence, "
-        "and independent satellite evidence."
+        "Integrated river, rainfall, and terrain hazard assessment "
+        "using hydrological signals, DEM-derived terrain intelligence, "
+        "rainfall intelligence, and independent satellite evidence."
     )
 
     if not DATA_PATH.exists():
@@ -157,6 +157,18 @@ def main():
 
     hydrological_score = float(
         event["hydrological_risk_score_0_100"]
+    )
+
+    terrain_score = float(
+        event["terrain_hazard_score_0_100"]
+    )
+
+    trinetra_score = float(
+        event["trinetra_hazard_score_0_100"]
+    )
+
+    trinetra_level = str(
+        event["trinetra_hazard_level"]
     )
 
     satellite_score = float(
@@ -214,9 +226,46 @@ def main():
     )
 
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
+
+    # ---------------------------------------------------------
+    # TRINETRA COMBINED HAZARD
+    # ---------------------------------------------------------
 
     with col1:
+        st.metric(
+            label="TRINETRA Hazard Score",
+            value=f"{trinetra_score:.0f} / 100",
+            help=(
+                "Combined MVP hazard index based on "
+                "hydrological risk and local DEM-derived "
+                "terrain hazard."
+            ),
+            border=True,
+        )
+
+        st.markdown(
+            f"""
+            <div style="
+                background-color: {risk_color(trinetra_level)};
+                color: white;
+                padding: 10px;
+                border-radius: 8px;
+                text-align: center;
+                font-weight: bold;
+                margin-top: 8px;
+            ">
+                {trinetra_level}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    # ---------------------------------------------------------
+    # HYDROLOGICAL RISK
+    # ---------------------------------------------------------
+
+    with col2:
         st.metric(
             label="Hydrological Risk Score",
             value=f"{hydrological_score:.0f} / 100",
@@ -244,7 +293,11 @@ def main():
             unsafe_allow_html=True,
         )
 
-    with col2:
+    # ---------------------------------------------------------
+    # SATELLITE EVIDENCE
+    # ---------------------------------------------------------
+
+    with col3:
         st.metric(
             label="Satellite Evidence Score",
             value=f"{satellite_score:.2f} / 100",
@@ -272,32 +325,58 @@ def main():
             unsafe_allow_html=True,
         )
 
-    with col3:
+    # ---------------------------------------------------------
+    # DEM TERRAIN HAZARD
+    # ---------------------------------------------------------
+
+    with col4:
+        terrain_level = str(
+            event["terrain_hazard_level"]
+        )
+
         st.metric(
-            label="System Recommendation",
-            value="Monitor urgently",
+            label="Terrain Hazard Score",
+            value=f"{terrain_score:.0f} / 100",
             help=(
-                "Critical river risk requires monitoring even "
-                "when satellite flood evidence is inconclusive."
+                "Local DEM-derived terrain hazard score "
+                "calculated around the event."
             ),
             border=True,
         )
 
-        st.info(
-            "Do not interpret a high hydrological risk score "
-            "as automatic satellite-confirmed flooding."
+        st.markdown(
+            f"""
+            <div style="
+                background-color: {risk_color(terrain_level)};
+                color: white;
+                padding: 10px;
+                border-radius: 8px;
+                text-align: center;
+                font-weight: bold;
+                margin-top: 8px;
+            ">
+                {terrain_level}
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
+
+    st.info(
+        "TRINETRA Hazard Score combines hydrological risk "
+        "and local DEM-derived terrain hazard. Satellite "
+        "evidence is shown separately as supporting evidence."
+    )
 
     st.divider()
 
     st.subheader("System Interpretation")
 
     st.warning(
-        "⚠️ **Critical hydrological risk detected.** "
-        "Satellite analysis is inconclusive for widespread "
-        "post-event inundation within the selected 10 km AOI. "
-        "Continue monitoring and verify conditions using official "
-        "reports and local observations."
+        f"⚠️ **TRINETRA hazard level: {trinetra_level}.** "
+        f"Combined hazard score is **{trinetra_score:.1f}/100**, "
+        f"based on hydrological risk (**{hydrological_score:.1f}/100**) "
+        f"and local DEM terrain hazard (**{terrain_score:.1f}/100**). "
+        "Satellite evidence remains a separate supporting indicator."
     )
 
     st.write(
@@ -421,14 +500,24 @@ def main():
     summary_table = pd.DataFrame(
         {
             "Data source": [
+                "TRINETRA combined hazard",
                 "River hydrology model",
+                "DEM terrain analysis",
                 "Sentinel-2 optical imagery",
                 "Sentinel-1 SAR imagery",
             ],
             "Key result": [
                 (
+                    f"{trinetra_score:.0f}/100 — "
+                    f"{trinetra_level}"
+                ),
+                (
                     f"{hydrological_score:.0f}/100 — "
                     f"{hydrological_level}"
+                ),
+                (
+                    f"{terrain_score:.0f}/100 — "
+                    f"{terrain_level}"
                 ),
                 (
                     f"New water: "
@@ -444,9 +533,11 @@ def main():
                 ),
             ],
             "Interpretation": [
-                "Critical river-risk condition.",
-                "No net optical water expansion in the selected AOI.",
-                "No strong SAR evidence of widespread new open water.",
+                "Combined MVP hazard index using hydrological and local DEM terrain components.",
+                "Dynamic river-hydrology hazard condition.",
+                "Local DEM-derived terrain hazard condition.",
+                "Optical satellite evidence for post-event water change.",
+                "SAR satellite evidence for post-event water change.",
             ],
         }
     )
@@ -1029,8 +1120,8 @@ def main():
     st.divider()
 
     st.caption(
-        "TRINETRA integrates river hydrology, rainfall "
-        "intelligence, and satellite-derived evidence as an "
+        "TRINETRA integrates river hydrology, rainfall, DEM-derived "
+        "terrain intelligence, and satellite-derived evidence as an "
         "academic disaster-risk assessment prototype. "
         "It is not an official emergency-alert system."
     )
