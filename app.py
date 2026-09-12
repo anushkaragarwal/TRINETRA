@@ -1,3 +1,6 @@
+import requests
+
+BACKEND_URL = "http://127.0.0.1:8000"
 from pathlib import Path
 import pandas as pd
 import streamlit as st
@@ -324,6 +327,62 @@ def main():
             """,
             unsafe_allow_html=True,
         )
+
+
+    # ============================================================
+# HAZARD ZONE MAP
+# ============================================================
+
+st.divider()
+st.subheader("🗺️ TRINETRA Hazard Zones")
+
+try:
+    hazard_response = requests.get(
+        f"{BACKEND_URL}/api/hazard-zones",
+        timeout=30
+    )
+    hazard_response.raise_for_status()
+
+    hazard_data = hazard_response.json()
+    zones = hazard_data.get("zones", [])
+
+    if zones:
+
+        hazard_df = pd.DataFrame(zones)
+
+        # Map data
+        map_df = hazard_df[
+            ["lat", "lon", "hazard_score", "risk_level", "type"]
+        ].copy()
+
+        map_df["size"] = map_df["hazard_score"]
+
+        st.map(
+            map_df,
+            latitude="lat",
+            longitude="lon",
+            size="size",
+            zoom=9,
+        )
+
+        st.caption(
+            "Hazard locations are derived from the current "
+            "TRINETRA multi-hazard assessment."
+        )
+
+        st.dataframe(
+            hazard_df[
+                ["type", "hazard_score", "risk_level", "lat", "lon"]
+            ],
+            use_container_width=True,
+            hide_index=True,
+        )
+
+    else:
+        st.warning("No hazard-zone data available.")
+
+except Exception as e:
+    st.error(f"Unable to load hazard zones: {e}")    
 
     # ---------------------------------------------------------
     # DEM TERRAIN HAZARD
