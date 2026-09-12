@@ -1,0 +1,64 @@
+settlement_id,settlement_name,latitude,longitude,coordinate_source,coordinate_confidence,matched_address,geocoding_query,verification_status,verification_reason
+SETTLEMENT_40809,Khiron,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40811,Arurhi Paturi,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40813,Pandukaswar,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40814,Pulana Chak Bhyudar,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40815,Toli Laga Chiae,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40816,Chaien,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40818,Bharkichak-Urgam,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40819,Bheta Chak Urgam,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40820,Lyari Thana,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40821,Salna Chak Urgam,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40822,Hailang,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40823,Paini,30.3051559,79.2328399,OpenStreetMap Nominatim,MEDIUM,"Paini Palli, Pokhari, Chamoli, Uttarakhand, 246446, India","Paini, Chamoli, Uttarakhand, India",REJECT,Returned address contains outside-area location: pokhari
+SETTLEMENT_40824,Sailang,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40825,Gaunkh Laga Sailang,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40826,Auli Laga Joshimath,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40827,Auli Laga Salud Dugra,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40828,Salud Dugra,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40831,Uchougaur,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40833,Jakhola,29.442438,79.9053669,OpenStreetMap Nominatim,MEDIUM,"Jakhola, Dungra, Pati, Champawat, Uttarakhand, 262580, India","Jakhola, Uttarakhand, India",REJECT,Coordinates fall outside the expected Joshimath/Chamoli region
+SETTLEMENT_40835,Pokhani Urf Pokhari,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40837,Tirosi,30.4767634,79.4639175,OpenStreetMap Nominatim,MEDIUM,"SubCentre, Tirosi, NH7, Tangi Talli, Langsi, Chamoli, Uttarakhand, 246472, India","Tirosi, Joshimath, Chamoli, Uttarakhand, India",REVIEW,"Chamoli/Uttarakhand match, but Joshimath not explicitly confirmed"
+SETTLEMENT_40839,Tapon,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40842,Tangni talli,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40843,Tangni malli,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40844,Jalgwar,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40846,Marwadi Chak Pakhi,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40848,Noligwar,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40851,Ganai,30.4729745,79.5020465,OpenStreetMap Nominatim,MEDIUM,"SubCentre, Ganai, NH7, Lapon, Langsi, Chamoli, Uttarakhand, 246472, India","Ganai, Joshimath, Chamoli, Uttarakhand, India",REVIEW,"Chamoli/Uttarakhand match, but Joshimath not explicitly confirmed"
+SETTLEMENT_40852,Bhalgaon,29.8803893,78.6039167,OpenStreetMap Nominatim,MEDIUM,"Bhalgaon, Dādāmandi, Kotdwara, Pauri Garhwal, Uttarakhand, 246124, India","Bhalgaon, Uttarakhand, India",REJECT,Coordinates fall outside the expected Joshimath/Chamoli region
+SETTLEMENT_40853,Longsagari,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40854,Fagti,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40855,Pagrasu,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40857,Sukhi,29.0909403,79.6452725,OpenStreetMap Nominatim,MEDIUM,"Sukhi Nadi, Lakhanpur, Lalkuan, Nainital, Uttarakhand, India","Sukhi, Uttarakhand, India",REJECT,Coordinates fall outside the expected Joshimath/Chamoli region
+SETTLEMENT_40860,Inara,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40861,Khancha talla,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40862,Khancha malla,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40863,Merag,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40864,Bara gaon,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40865,Payya chormi,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40867,Kundikhola,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40869,Raigari,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40871,Bilagar,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40873,Topovan,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40874,Gahar,30.0111388,78.7947392,OpenStreetMap Nominatim,MEDIUM,"gahar, Pauri, Pauri Garhwal, Uttarakhand, 246167, India","Gahar, Uttarakhand, India",REJECT,Coordinates fall outside the expected Joshimath/Chamoli region
+SETTLEMENT_40876,Karachhon,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40877,Badal Gaitha,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40879,Jugaju chak lata,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40881,Raini Chak Lata,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40882,Pang Chak Lata,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40883,Morana Chak Subhai,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40884,Subhai,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40885,Raini Chak Subhai,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40890,Gurguti,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40891,Mahargaon,30.4061118,79.4205814,OpenStreetMap Nominatim,MEDIUM,"Mahargaon, Chamoli Tehsil, Chamoli, Uttarakhand, India","Mahargaon, Chamoli, Uttarakhand, India",REVIEW,"Chamoli/Uttarakhand match, but Joshimath not explicitly confirmed"
+SETTLEMENT_40893,Kailashpur,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40894,Rewal Chak Kurkuti,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40895,Farkiagaon,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40897,Jalam,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40899,Lamtoli,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40900,Kaga Laga Dronagiri,,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_40905,Chamoli,30.4396857,79.4305095,OpenStreetMap Nominatim,MEDIUM,"JNV Chamoli, NH7, Bajani, Pīpalkoti, Chamoli Tehsil, Chamoli, Uttarakhand, 246472, India","Chamoli, Joshimath, Chamoli, Uttarakhand, India",REVIEW,"Chamoli/Uttarakhand match, but Joshimath not explicitly confirmed"
+SETTLEMENT_800290,Badrinathpuri (NP),,,MISSING,MISSING,,,MISSING,No coordinates available
+SETTLEMENT_800291,Joshimath  (NPP),,,MISSING,MISSING,,,MISSING,No coordinates available

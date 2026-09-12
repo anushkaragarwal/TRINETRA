@@ -1,0 +1,102 @@
+settlement_name,latitude,longitude,source,confidence,status
+Mana,30.9671228,79.4109692,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Khiron,30.686187,79.482644,PaintMaps Chamoli map,MEDIUM,FILLED
+Thaing,30.5667243,79.5096105,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Arurhi Paturi,30.648057,79.532948,PaintMaps Chamoli map,MEDIUM,FILLED
+Bhyudar,30.674709,79.5913479,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Pandukaswar,30.633418,79.548607,PaintMaps Chamoli map,MEDIUM,FILLED
+Pulana Chak Bhyudar,30.634643,79.572274,PaintMaps Chamoli map,MEDIUM,FILLED
+Toli Laga Chiae,30.584483,79.546531,PaintMaps Chamoli map; matched spelling Toli Laga Chaie,MEDIUM,FILLED
+Chaien,30.566174,79.538058,PaintMaps Chamoli map,MEDIUM,FILLED
+Urgam,30.5400882,79.4566318,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Bharkichak-Urgam,30.548262,79.462068,PaintMaps Chamoli map; matched spelling Bharki Chak Urgam,MEDIUM,FILLED
+Bheta Chak Urgam,30.540621,79.469825,PaintMaps Chamoli map,MEDIUM,FILLED
+Lyari Thana,30.529839,79.471426,PaintMaps Chamoli map,MEDIUM,FILLED
+Salna Chak Urgam,30.530055,79.492736,PaintMaps Chamoli map,MEDIUM,FILLED
+Hailang,30.525162,79.500225,PaintMaps Chamoli map,MEDIUM,FILLED
+Paini,30.528091,79.521383,PaintMaps Chamoli map; Joshimath-area occurrence,MEDIUM,FILLED
+Sailang,30.539261,79.528345,PaintMaps Chamoli map,MEDIUM,FILLED
+Gaunkh Laga Sailang,30.545382,79.542532,PaintMaps Chamoli map,MEDIUM,FILLED
+Auli Laga Joshimath,30.532778,79.568611,Wikidata/Census-linked Auli coordinate,MEDIUM,FILLED
+Auli Laga Salud Dugra,30.525709,79.569699,PaintMaps Chamoli map,MEDIUM,FILLED
+Salud Dugra,30.510883,79.523146,PaintMaps Chamoli map,MEDIUM,FILLED
+Dumak,30.5072396,79.3831468,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Kalgoth,30.516532,79.415042,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Uchougaur,30.503089,79.431598,PaintMaps Chamoli map,MEDIUM,FILLED
+Palla,30.5122953,79.4720821,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Jakhola,30.507425,79.460068,PaintMaps Chamoli map,MEDIUM,FILLED
+Kimana,30.4978872,79.4523689,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Pokhani Urf Pokhari,30.476002,79.433276,PaintMaps Chamoli map,MEDIUM,FILLED
+Lanji,30.480797,79.4483104,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Tirosi,30.4767634,79.4639175,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Dwing,30.4886522,79.4620501,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Tapon,30.494761,79.473569,PaintMaps Chamoli map,MEDIUM,FILLED
+Gulabkoti,30.5046348,79.4916067,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Langsi,30.4933697,79.4792409,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Tangni talli,30.477567,79.463872,PaintMaps Chamoli map,MEDIUM,FILLED
+Tangni malli,30.476768,79.472709,PaintMaps Chamoli map,MEDIUM,FILLED
+Jalgwar,30.465385,79.451459,PaintMaps Chamoli map,MEDIUM,FILLED
+Pakhi,30.4656853,79.4513854,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Marwadi Chak Pakhi,30.461114,79.44693,PaintMaps Chamoli map,MEDIUM,FILLED
+Darmi,30.4620539,79.4908905,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Noligwar,30.480475,79.493199,PaintMaps Chamoli map,MEDIUM,FILLED
+Pagnau,30.4945351,79.4962988,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Molta,30.4831116,79.5207657,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Ganai,30.4729745,79.5020465,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Bhalgaon,30.519004,79.732875,PaintMaps Chamoli map,MEDIUM,FILLED
+Longsagari,30.596568,79.785626,PaintMaps Chamoli map,MEDIUM,FILLED
+Fagti,30.55631,79.775609,PaintMaps Chamoli map,MEDIUM,FILLED
+Pagrasu,30.550788,79.754937,PaintMaps Chamoli map,MEDIUM,FILLED
+Tolma,30.5239133,79.752224,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Sukhi,30.520034,79.728758,PaintMaps Chamoli map,MEDIUM,FILLED
+Kuraipani,30.5147004,79.7203934,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Aira,30.5416843,79.6190808,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Inara,,,No defensible coordinate found in researched sources,MISSING,UNRESOLVED
+Khancha talla,30.536987,79.597058,PaintMaps Chamoli map,MEDIUM,FILLED
+Khancha malla,30.53591,79.593152,PaintMaps Chamoli map,MEDIUM,FILLED
+Merag,30.528207,79.596253,PaintMaps Chamoli map; matched alias Mirag/Merag,MEDIUM,FILLED
+Bara gaon,30.521287,79.600341,PaintMaps Chamoli map,MEDIUM,FILLED
+Payya chormi,30.517371,79.608799,PaintMaps Chamoli map,MEDIUM,FILLED
+Dhak,30.498861,79.6113429,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Kundikhola,30.499528,79.609174,PaintMaps Chamoli map,MEDIUM,FILLED
+Tugasi,30.4822562,79.5981038,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Raigari,30.477774,79.612045,PaintMaps Chamoli map,MEDIUM,FILLED
+Karchi,30.4830375,79.6077382,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Bilagar,30.495604,79.61983,PaintMaps Chamoli map,MEDIUM,FILLED
+Chamtoli,30.5001965,79.6167121,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Topovan,30.4861,79.4639,IIT Roorkee river-gauging station named Topovan; proxy only,LOW_PROXY,FILLED
+Gahar,30.501148,79.625009,PaintMaps Chamoli map,MEDIUM,FILLED
+Bhangyul,30.4956893,79.6321168,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Karachhon,30.47768,79.619269,PaintMaps Chamoli map; matched spelling Karchhon,MEDIUM,FILLED
+Badal Gaitha,,,No defensible coordinate found in researched sources,MISSING,UNRESOLVED
+Juwagwar,30.4931218,79.6743167,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Jugaju chak lata,30.490226,79.691506,PaintMaps Chamoli map,MEDIUM,FILLED
+Lata,30.49667,79.70719,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Raini Chak Lata,30.488322,79.694825,PaintMaps Chamoli map,MEDIUM,FILLED
+Pang Chak Lata,,,No defensible coordinate found in researched sources,MISSING,UNRESOLVED
+Morana Chak Subhai,30.46927,79.703664,PaintMaps Chamoli map,MEDIUM,FILLED
+Subhai,30.479065,79.676862,PaintMaps Chamoli map,MEDIUM,FILLED
+Raini Chak Subhai,30.48615,79.691402,PaintMaps Chamoli map,MEDIUM,FILLED
+Ringi,30.4780383,79.618965,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Bampa,30.7436664,79.8297153,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Gamsali,30.7559986,79.8261873,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Niti,30.7776642,79.8411215,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Gurguti,30.711087,79.843565,PaintMaps Chamoli map,MEDIUM,FILLED
+Mahargaon,30.4061118,79.4205814,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Malari,30.6845508,79.8893688,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Kailashpur,30.706927,79.876135,PaintMaps Chamoli map; supported by Niti Valley field-study location,MEDIUM,FILLED
+Rewal Chak Kurkuti,,,No defensible coordinate found in researched sources,MISSING,UNRESOLVED
+Farkiagaon,,,No defensible coordinate found in researched sources,MISSING,UNRESOLVED
+Kosa,30.67793,79.8609495,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Jalam,30.638213,79.825207,PaintMaps Chamoli map,MEDIUM,FILLED
+Jumma,30.60791,79.80606,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Lamtoli,,,No defensible coordinate found in researched sources,MISSING,UNRESOLVED
+Kaga Laga Dronagiri,30.612136,79.823992,PaintMaps Chamoli map,MEDIUM,FILLED
+Garpak,30.6269079,79.854244,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Dronagiri,30.5991704,79.8680413,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+F-1,30.5555752,79.5612607,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Joshimath,30.5555752,79.5612607,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Chamoli,30.4396857,79.4305095,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Joshimath,30.5555752,79.5612607,OpenStreetMap Nominatim,MEDIUM,PRESERVED
+Badrinathpuri (NP),30.743,79.494,Geocountries Badrinathpuri map,MEDIUM,FILLED
+Joshimath  (NPP),,,No defensible coordinate found in researched sources,MISSING,UNRESOLVED

@@ -1,0 +1,13 @@
+metric,value
+total_settlements,101.0
+total_population_2026,56794.0
+settlements_with_coordinates,95.0
+settlements_without_coordinates,6.0
+settlements_with_exposure,101.0
+allocated_population,2727.0
+remaining_population,54067.0
+allocation_rate_percent,4.8
+fully_allocated_settlements,0.0
+partially_allocated_settlements,1.0
+not_allocated_settlements,90.0
+unresolved_coordinate_settlements,6.0
