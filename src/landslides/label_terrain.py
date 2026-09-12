@@ -11,11 +11,11 @@ from rasterio.features import rasterize
 
 dem_path = "data/processed/dem/dem_utm44n.tif"
 
-landslide_path = "data/features/mvp_landslides_2014.gpkg"
+landslide_path = "data/features/historical_landslides_2014_2017.gpkg"
 
 terrain_path = "data/features/terrain_features.csv"
 
-output_path = "data/features/terrain_features_labeled.csv"
+output_path = "data/features/terrain_features_labeled_2014_2017.csv"
 
 
 # =========================================================
@@ -43,10 +43,7 @@ print("Resolution:", transform.a, transform.e)
 
 print("\nLoading landslides...")
 
-landslides = gpd.read_file(
-    landslide_path,
-    layer="landslides_2014"
-)
+landslides = gpd.read_file(landslide_path)
 
 print("Landslides:", len(landslides))
 print("Original CRS:", landslides.crs)
