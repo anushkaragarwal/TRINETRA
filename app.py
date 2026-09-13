@@ -330,60 +330,204 @@ def main():
 
 
     # ============================================================
-# HAZARD ZONE MAP
-# ============================================================
+    # HAZARD ZONE MAP
+    # ============================================================
 
-st.divider()
-st.subheader("🗺️ TRINETRA Hazard Zones")
+    st.divider()
+    st.subheader("🗺️ TRINETRA Hazard Zones")
 
-try:
-    hazard_response = requests.get(
-        f"{BACKEND_URL}/api/hazard-zones",
-        timeout=30
-    )
-    hazard_response.raise_for_status()
-
-    hazard_data = hazard_response.json()
-    zones = hazard_data.get("zones", [])
-
-    if zones:
-
-        hazard_df = pd.DataFrame(zones)
-
-        # Map data
-        map_df = hazard_df[
-            ["lat", "lon", "hazard_score", "risk_level", "type"]
-        ].copy()
-
-        map_df["size"] = map_df["hazard_score"]
-
-        st.map(
-            map_df,
-            latitude="lat",
-            longitude="lon",
-            size="size",
-            zoom=9,
+    try:
+        hazard_response = requests.get(
+            f"{BACKEND_URL}/api/hazard-zones",
+            timeout=30
         )
+        hazard_response.raise_for_status()
 
-        st.caption(
-            "Hazard locations are derived from the current "
-            "TRINETRA multi-hazard assessment."
+        hazard_data = hazard_response.json()
+        zones = hazard_data.get("zones", [])
+
+        if zones:
+            hazard_df = pd.DataFrame(zones)
+
+            map_df = hazard_df[
+                ["lat", "lon", "hazard_score", "risk_level", "type"]
+            ].copy()
+
+            map_df["size"] = map_df["hazard_score"]
+
+            st.map(
+                map_df,
+                latitude="lat",
+                longitude="lon",
+                size="size",
+                zoom=9,
+            )
+
+            st.caption(
+                "Hazard locations are derived from the current "
+                "TRINETRA multi-hazard assessment."
+            )
+
+            st.dataframe(
+                hazard_df[
+                    ["type", "hazard_score", "risk_level", "lat", "lon"]
+                ],
+                use_container_width=True,
+                hide_index=True,
+            )
+
+        else:
+            st.warning("No hazard-zone data available.")
+
+    except Exception as e:
+        st.error(f"Unable to load hazard zones: {e}")
+
+
+    # ============================================================
+    # RELOCATION DECISION SUPPORT
+    # ============================================================
+
+    st.divider()
+    st.subheader("🚨 Relocation Decision Support")
+
+    try:
+        relocation_response = requests.get(
+            f"{BACKEND_URL}/api/relocation/decisions?limit=20",
+            timeout=30
         )
+        relocation_response.raise_for_status()
 
-        st.dataframe(
-            hazard_df[
-                ["type", "hazard_score", "risk_level", "lat", "lon"]
-            ],
-            use_container_width=True,
-            hide_index=True,
+        relocation_data = relocation_response.json()
+        relocations = relocation_data.get("relocations", [])
+
+        if relocations:
+            relocation_df = pd.DataFrame(relocations)
+
+            total_people = int(
+                relocation_df["allocated_people"].sum()
+            )
+
+            feasible = int(
+                (
+                    relocation_df["recommended_action"]
+                    == "RELOCATION ROUTE FEASIBLE"
+                ).sum()
+            )
+
+            review = int(
+                (
+                    relocation_df["recommended_action"]
+                    == "REVIEW ROUTE BEFORE RELOCATION"
+                ).sum()
+            )
+
+            c1, c2, c3 = st.columns(3)
+
+            with c1:
+                st.metric(
+    "People Allocated (Top 20)",
+    f"{total_people:,}"
+)
+
+            with c2:
+                st.metric(
+    "Access Feasible",
+    feasible
+)
+
+            with c3:
+                st.metric(
+                    "Routes Requiring Review",
+                    review
+                )
+
+            # Relocation map
+            relocation_map = relocation_df[
+                [
+                    "destination_latitude",
+                    "destination_longitude",
+                    "allocated_people"
+                ]
+            ].copy()
+
+            st.map(
+                relocation_map,
+                latitude="destination_latitude",
+                longitude="destination_longitude",
+                size="allocated_people",
+                zoom=9,
+            )
+
+            st.markdown("### Recommended Relocation Sites")
+
+            # Clean emergency access information
+            if "emergency_access" in relocation_df.columns:
+
+                relocation_df["nearest_road_km"] = (
+                    relocation_df["emergency_access"].apply(
+                        lambda x:
+                        x.get("nearest_road_km")
+                        if isinstance(x, dict)
+                        else None
+                    )
+                )
+
+                relocation_df["nearest_bridge_km"] = (
+                    relocation_df["emergency_access"].apply(
+                        lambda x:
+                        x.get("nearest_bridge_km")
+                        if isinstance(x, dict)
+                        else None
+                    )
+                )
+
+                relocation_df["emergency_status"] = (
+                    relocation_df["emergency_access"].apply(
+                        lambda x:
+                        x.get("status")
+                        if isinstance(x, dict)
+                        else "N/A"
+                    )
+                )
+
+            display_columns = [
+                "source_settlement",
+                "source_population_2026_est",
+                "destination_site",
+                "allocated_people",
+                "ai_score",
+                "distance_km",
+                "site_safe_score",
+                "site_accessibility",
+                "site_infrastructure",
+                "nearest_road_km",
+                "nearest_bridge_km",
+                "emergency_status",
+                "recommended_action"
+            ]
+
+            display_df = relocation_df[
+                [
+                    c for c in display_columns
+                    if c in relocation_df.columns
+                ]
+            ].copy()
+
+            st.dataframe(
+                display_df,
+                use_container_width=True,
+                hide_index=True
+            )
+
+        else:
+            st.warning(
+                "No relocation recommendations available."
+            )
+
+    except Exception as e:
+        st.error(
+            f"Unable to load relocation decisions: {e}"
         )
-
-    else:
-        st.warning("No hazard-zone data available.")
-
-except Exception as e:
-    st.error(f"Unable to load hazard zones: {e}")    
-
     # ---------------------------------------------------------
     # DEM TERRAIN HAZARD
     # ---------------------------------------------------------

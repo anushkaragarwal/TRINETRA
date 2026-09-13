@@ -7,7 +7,12 @@ from backend.services.rainfall import get_latest_rainfall, refresh_rainfall
 from backend.services.satellite import get_latest_satellite, refresh_satellite
 from backend.services.terrain import get_latest_terrain, refresh_terrain
 from backend.services.hazard_zones import get_hazard_zones
-
+from backend.services.relocation import (
+    refresh_relocation_data,
+    get_relocation_summary,
+    get_top_relocations,
+    get_relocation_decisions
+)
 load_dotenv()
 
 app = FastAPI(title="TRINETRA API")
@@ -197,3 +202,18 @@ def trinetra_result():
 @app.get("/api/hazard-zones")
 def hazard_zones():
     return get_hazard_zones()
+
+@app.post("/api/relocation/refresh")
+def refresh_relocation():
+    return refresh_relocation_data()
+
+
+@app.get("/api/relocation/summary")
+def relocation_summary():
+    return get_relocation_summary()
+@app.get("/api/relocation/top")
+def top_relocations(limit: int = 20):
+    return get_top_relocations(limit)
+@app.get("/api/relocation/decisions")
+def relocation_decisions(limit: int = 20):
+    return get_relocation_decisions(limit)
