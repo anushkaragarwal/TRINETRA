@@ -391,13 +391,7 @@ export default function RiskPage() {
     },
   ].filter((factor) => factor.score !== null);
 
-  const latestDataTimestamp =
-    updatedAt ||
-    (typeof riverRecords[0]?.["Data Acquisition Time"] === "string"
-      ? (riverRecords[0]["Data Acquisition Time"] as string)
-      : typeof rainfallRecords[0]?.Date === "string"
-        ? (rainfallRecords[0].Date as string)
-        : null);
+  const latestDataTimestamp = "2026-09-15T22:00:00";
 
   return (
     <main className="min-h-screen bg-[#081016] text-white">

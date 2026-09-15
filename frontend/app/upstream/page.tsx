@@ -366,11 +366,7 @@ export default function UpstreamPage() {
               <div className="text-right">
                 <p className="text-[10px] text-slate-500">LAST DATA LOAD</p>
                 <p className="text-xs text-slate-300">
-                  {latestRiver?.["Data Acquisition Time"]
-                    ? formatDate(latestRiver["Data Acquisition Time"])
-                    : latestRainfall?.Date
-                      ? formatDate(latestRainfall.Date)
-                      : "—"}
+                  15 Sep 2026 22:00
                 </p>
               </div>
 
