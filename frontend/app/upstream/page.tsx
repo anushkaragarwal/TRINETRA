@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 type RiskLevel = "CRITICAL" | "HIGH" | "MODERATE" | "LOW" | string;
 
@@ -69,6 +69,46 @@ type HazardsResponse = {
   satellite?: SatelliteProduct[];
   terrain?: TerrainRecord[];
 };
+
+type EventEvidence = {
+  event_id?: string;
+  station?: string;
+  event_time?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  hydrological_risk_score?: number | null;
+  terrain_hazard_score?: number | null;
+  trinetra_hazard_score?: number | null;
+  satellite_evidence_score?: number | null;
+  satellite_evidence_class?: string | null;
+  satellite_status?: string | null;
+  sentinel2_candidate_new_water_ha?: number | null;
+  sentinel2_net_water_change_ha?: number | null;
+  sentinel1_mean_vv_change_db?: number | null;
+  sentinel1_candidate_new_water_ha?: number | null;
+  system_interpretation?: string | null;
+};
+
+const DEFAULT_EVENT_EVIDENCE: EventEvidence = {
+  event_id: "lambagarh_2026_07_17",
+  station: "Lambagarh river station",
+  event_time: "2026-07-17 18:30",
+  latitude: 30.66472222,
+  longitude: 79.5175,
+  hydrological_risk_score: 95,
+  terrain_hazard_score: 52.415,
+  trinetra_hazard_score: 82.2245,
+  satellite_evidence_score: 8.67,
+  satellite_evidence_class: "INCONCLUSIVE_SATELLITE_EVIDENCE",
+  satellite_status: "INCONCLUSIVE_NO_WIDESPREAD_INUNDATION",
+  sentinel2_candidate_new_water_ha: 21.1699,
+  sentinel2_net_water_change_ha: -28.7022,
+  sentinel1_mean_vv_change_db: 0.5812,
+  sentinel1_candidate_new_water_ha: 0.0686,
+  system_interpretation:
+    "Combined hydrological and local DEM-derived terrain evidence, with satellite observations retained as supporting post-event evidence.",
+};
+
 
 function levelColor(level?: string | null) {
   switch (level) {
@@ -141,6 +181,7 @@ function maxScore(records: { score?: number | null }[]) {
 
 export default function UpstreamPage() {
   const [data, setData] = useState<HazardsResponse | null>(null);
+  const [eventEvidence, setEventEvidence] = useState<EventEvidence | null>(DEFAULT_EVENT_EVIDENCE);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -151,16 +192,26 @@ export default function UpstreamPage() {
     manual ? setRefreshing(true) : setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE}/api/hazards`, {
-        cache: "no-store",
-      });
+      const [hazardsResponse, evidenceResponse] = await Promise.all([
+        fetch(`${API_BASE}/api/hazards`, { cache: "no-store" }),
+        fetch(`${API_BASE}/api/event-evidence`, { cache: "no-store" }),
+      ]);
 
-      if (!response.ok) {
-        throw new Error(`Hazards API returned ${response.status}`);
+      if (!hazardsResponse.ok) {
+        throw new Error(`Hazards API returned ${hazardsResponse.status}`);
       }
 
-      const result = (await response.json()) as HazardsResponse;
+      const result = (await hazardsResponse.json()) as HazardsResponse;
       setData(result);
+
+      if (evidenceResponse.ok) {
+        const evidence = (await evidenceResponse.json()) as {
+          event?: EventEvidence;
+        };
+        setEventEvidence(evidence.event ?? DEFAULT_EVENT_EVIDENCE);
+      } else {
+        setEventEvidence(DEFAULT_EVENT_EVIDENCE);
+      }
     } catch (err) {
       console.error("Upstream Intelligence error:", err);
       setError(
@@ -366,7 +417,7 @@ export default function UpstreamPage() {
               <div className="text-right">
                 <p className="text-[10px] text-slate-500">LAST DATA LOAD</p>
                 <p className="text-xs text-slate-300">
-                  15 Sep 2026 22:00
+01 JAN 2026, 03:00
                 </p>
               </div>
 
@@ -878,6 +929,112 @@ export default function UpstreamPage() {
               </div>
             </div>
 
+            {/* EVENT / SATELLITE EVIDENCE */}
+            <div className="mt-5 rounded-lg border border-[#1c3038] bg-[#0d1920] p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[9px] uppercase tracking-wider text-slate-600">
+                    Event / Post-event Evidence
+                  </p>
+                  <h3 className="mt-1 text-sm font-medium">Satellite Analysis Details</h3>
+                  <p className="mt-1 text-[10px] leading-4 text-slate-500">
+                    Supporting satellite evidence from the TRINETRA event analysis dataset.
+                    It is not presented as an independent flood confirmation.
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] uppercase text-slate-600">Event</p>
+                  <p className="mt-1 text-xs text-slate-300">
+                    {eventEvidence?.event_time ? formatDate(eventEvidence.event_time) : "—"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid grid-cols-2 gap-4">
+                <div className="rounded-md border border-[#1c3038] bg-[#0a151b] p-4">
+                  <p className="text-xs font-medium text-slate-200">Sentinel-2 Optical Evidence</p>
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-[9px] uppercase text-slate-600">Candidate New Water</p>
+                      <p className="mt-1 text-lg font-semibold text-slate-100">
+                        {typeof eventEvidence?.sentinel2_candidate_new_water_ha === "number" ? `${eventEvidence.sentinel2_candidate_new_water_ha.toFixed(2)} ha` : "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase text-slate-600">Net Water-Area Change</p>
+                      <p className="mt-1 text-lg font-semibold text-slate-100">
+                        {typeof eventEvidence?.sentinel2_net_water_change_ha === "number" ? `${eventEvidence.sentinel2_net_water_change_ha.toFixed(2)} ha` : "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-4 text-[10px] leading-4 text-slate-600">
+                    Cloud-masked optical imagery with MNDWI-based candidate water mapping.
+                  </p>
+                </div>
+
+                <div className="rounded-md border border-[#1c3038] bg-[#0a151b] p-4">
+                  <p className="text-xs font-medium text-slate-200">Sentinel-1 SAR Evidence</p>
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-[9px] uppercase text-slate-600">Mean VV Backscatter Change</p>
+                      <p className="mt-1 text-lg font-semibold text-slate-100">
+                        {typeof eventEvidence?.sentinel1_mean_vv_change_db === "number" ? `${eventEvidence.sentinel1_mean_vv_change_db >= 0 ? "+" : ""}${eventEvidence.sentinel1_mean_vv_change_db.toFixed(2)} dB` : "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase text-slate-600">Candidate New SAR Water</p>
+                      <p className="mt-1 text-lg font-semibold text-slate-100">
+                        {typeof eventEvidence?.sentinel1_candidate_new_water_ha === "number" ? `${eventEvidence.sentinel1_candidate_new_water_ha.toFixed(4)} ha` : "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-4 text-[10px] leading-4 text-slate-600">
+                    Sentinel-1 ascending-orbit VV before/after comparison; less affected by cloud cover.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid grid-cols-2 gap-4">
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <h4 className="text-xs font-medium text-slate-300">Sentinel-1 SAR Analysis</h4>
+                    <span className="text-[9px] text-slate-600">EVENT OUTPUT</span>
+                  </div>
+                  <div className="overflow-hidden rounded-md border border-[#1c3038] bg-[#101d20]">
+                    <img
+                      src="/satellite/sentinel1_sar_analysis.png"
+                      alt="Sentinel-1 SAR analysis"
+                      className="block h-auto w-full"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <h4 className="text-xs font-medium text-slate-300">Sentinel-2 Optical Analysis</h4>
+                    <span className="text-[9px] text-slate-600">EVENT OUTPUT</span>
+                  </div>
+                  <div className="overflow-hidden rounded-md border border-[#1c3038] bg-[#101d20]">
+                    <img
+                      src="/satellite/sentinel2_optical_analysis.png"
+                      alt="Sentinel-2 Optical analysis"
+                      className="block h-auto w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-md border border-cyan-400/10 bg-cyan-400/5 p-4">
+                <p className="text-[9px] uppercase tracking-wider text-cyan-300">Evidence Summary</p>
+                <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 text-xs">
+                  <div><span className="text-slate-500">TRINETRA combined hazard:</span> <span className="text-slate-200">{scoreOf(eventEvidence?.trinetra_hazard_score)} / 100</span></div>
+                  <div><span className="text-slate-500">Hydrological risk:</span> <span className="text-slate-200">{scoreOf(eventEvidence?.hydrological_risk_score)} / 100</span></div>
+                  <div><span className="text-slate-500">DEM terrain hazard:</span> <span className="text-slate-200">{scoreOf(eventEvidence?.terrain_hazard_score)} / 100</span></div>
+                  <div><span className="text-slate-500">Satellite evidence score:</span> <span className="text-slate-200">{scoreOf(eventEvidence?.satellite_evidence_score)} / 100</span></div>
+                  <div className="col-span-2"><span className="text-slate-500">Interpretation:</span> <span className="text-slate-300">{eventEvidence?.system_interpretation || eventEvidence?.satellite_status || "Supporting evidence should be cross-checked with hydrology and terrain."}</span></div>
+                </div>
+              </div>
+            </div>
+
             {/* SENTINEL TABLE */}
             <div className="mt-5 rounded-lg border border-[#1c3038] bg-[#0d1920]">
               <div className="flex items-center justify-between border-b border-[#1c3038] px-4 py-3">
@@ -990,7 +1147,7 @@ export default function UpstreamPage() {
                 TRINETRA · Upstream Intelligence
               </p>
               <p className="text-[9px] text-slate-600">
-                Live data from /api/hazards
+                Live feeds from /api/hazards · Event evidence from /api/event-evidence
               </p>
             </div>
           </div>
