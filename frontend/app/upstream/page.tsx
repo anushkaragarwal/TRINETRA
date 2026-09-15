@@ -1,82 +1,259 @@
-const upstreamSites = [
-  {
-    name: "Upper Alaknanda",
-    type: "River",
-    status: "WATCH",
-    value: "Rising",
-    change: "+18%",
-  },
-  {
-    name: "Dhauliganga Catchment",
-    type: "Catchment",
-    status: "NORMAL",
-    value: "Stable",
-    change: "-2%",
-  },
-  {
-    name: "Glacial Lake Zone",
-    type: "Water body",
-    status: "WATCH",
-    value: "Change detected",
-    change: "+7%",
-  },
-  {
-    name: "Badrinath Upper Basin",
-    type: "Terrain",
-    status: "NORMAL",
-    value: "Stable",
-    change: "0%",
-  },
-];
+"use client";
 
-const indicators = [
-  {
-    name: "River / Water Change",
-    score: 72,
-    description: "Above recent baseline",
-  },
-  {
-    name: "Satellite Surface Change",
-    score: 61,
-    description: "Moderate anomaly",
-  },
-  {
-    name: "Rainfall Upstream",
-    score: 68,
-    description: "Elevated conditions",
-  },
-  {
-    name: "Glacial Lake Change",
-    score: 43,
-    description: "Low-moderate signal",
-  },
-];
+import { useEffect, useMemo, useState } from "react";
+
+const API_BASE = "http://127.0.0.1:8000";
+
+type RiskLevel = "CRITICAL" | "HIGH" | "MODERATE" | "LOW" | string;
+
+type RiverRecord = {
+  Station?: string;
+  Agency?: string;
+  District?: string;
+  River?: string;
+  Basin?: string;
+  Latitude?: number | null;
+  Longitude?: number | null;
+  "Data Acquisition Time"?: string;
+  "Telemetry Hourly River Water Discharge (m3/sec)"?: number | null;
+  hybrid_hazard_score?: number | null;
+  hybrid_risk_category?: RiskLevel | null;
+  risk_category?: RiskLevel | null;
+  anomaly_label?: string | null;
+  anomaly_score?: number | null;
+  discharge_change_m3s?: number | null;
+  discharge_rate_m3s_per_hour?: number | null;
+  predicted_discharge_1h?: number | null;
+};
+
+type RainfallRecord = {
+  State?: string;
+  District?: string;
+  Date?: string;
+  "Daily Actual"?: number | null;
+  "Daily Normal"?: number | null;
+  "Daily Departure Per"?: number | string | null;
+  hybrid_hazard_score?: number | null;
+  hazard_category?: RiskLevel | null;
+  risk_category?: RiskLevel | null;
+  anomaly_label?: string | null;
+  anomaly_score?: number | null;
+  predicted_rainfall_1d?: number | null;
+};
+
+type TerrainRecord = {
+  cell_id?: string;
+  lat?: number | null;
+  lon?: number | null;
+  elevation?: number | null;
+  slope?: number | null;
+  terrain_hazard_score?: number | null;
+  terrain_hazard_level?: RiskLevel | null;
+};
+
+type SatelliteProduct = {
+  Id?: string;
+  Name?: string;
+  ContentDate?: {
+    Start?: string;
+    End?: string;
+  };
+  PublicationDate?: string;
+  GeoFootprint?: unknown;
+};
+
+type HazardsResponse = {
+  status?: string;
+  river?: RiverRecord[];
+  rainfall?: RainfallRecord[];
+  satellite?: SatelliteProduct[];
+  terrain?: TerrainRecord[];
+};
+
+function levelColor(level?: string | null) {
+  switch (level) {
+    case "CRITICAL":
+      return "text-red-400";
+    case "HIGH":
+      return "text-orange-400";
+    case "MODERATE":
+      return "text-yellow-400";
+    case "LOW":
+      return "text-emerald-400";
+    default:
+      return "text-slate-400";
+  }
+}
+
+function levelBg(level?: string | null) {
+  switch (level) {
+    case "CRITICAL":
+      return "bg-red-400";
+    case "HIGH":
+      return "bg-orange-400";
+    case "MODERATE":
+      return "bg-yellow-400";
+    case "LOW":
+      return "bg-emerald-400";
+    default:
+      return "bg-slate-500";
+  }
+}
+
+function scoreOf(value?: number | null) {
+  return typeof value === "number" && Number.isFinite(value)
+    ? value.toFixed(1)
+    : "—";
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
+function mapPosition(lat: number, lon: number) {
+  const left = ((lon - 79.4) / 0.35) * 100;
+  const top = (1 - (lat - 30.5) / 0.3) * 100;
+
+  return {
+    left: `${Math.min(96, Math.max(4, left))}%`,
+    top: `${Math.min(92, Math.max(8, top))}%`,
+  };
+}
+
+function maxScore(records: { score?: number | null }[]) {
+  const scores = records
+    .map((item) => item.score)
+    .filter((value): value is number => typeof value === "number");
+
+  return scores.length ? Math.max(...scores) : null;
+}
 
 export default function UpstreamPage() {
+  const [data, setData] = useState<HazardsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState("");
+  const [layer, setLayer] = useState<"SAR" | "HYDRO">("SAR");
+
+  const loadData = async (manual = false) => {
+    setError("");
+    manual ? setRefreshing(true) : setLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE}/api/hazards`, {
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        throw new Error(`Hazards API returned ${response.status}`);
+      }
+
+      const result = (await response.json()) as HazardsResponse;
+      setData(result);
+    } catch (err) {
+      console.error("Upstream Intelligence error:", err);
+      setError(
+        "Unable to load upstream data. Check that FastAPI and MongoDB are running.",
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const rivers = data?.river ?? [];
+  const rainfall = data?.rainfall ?? [];
+  const terrain = data?.terrain ?? [];
+  const satellites = data?.satellite ?? [];
+
+  const latestRiver = rivers[0];
+  const latestRainfall = rainfall[0];
+  const latestTerrain = terrain[0];
+
+  const riverScore = maxScore(
+    rivers.map((item) => ({ score: item.hybrid_hazard_score })),
+  );
+  const rainfallScore = maxScore(
+    rainfall.map((item) => ({ score: item.hybrid_hazard_score })),
+  );
+  const terrainScore = maxScore(
+    terrain.map((item) => ({ score: item.terrain_hazard_score })),
+  );
+
+  const activeSignals = useMemo(() => {
+    const riverSignals = rivers.filter(
+      (item) =>
+        item.hybrid_risk_category === "HIGH" ||
+        item.hybrid_risk_category === "CRITICAL" ||
+        item.anomaly_label === "ANOMALY",
+    ).length;
+
+    const rainfallSignals = rainfall.filter(
+      (item) =>
+        item.hazard_category === "HIGH" ||
+        item.hazard_category === "CRITICAL" ||
+        item.anomaly_label === "ANOMALY",
+    ).length;
+
+    return riverSignals + rainfallSignals;
+  }, [rivers, rainfall]);
+
+  const riverMapPoints = rivers
+    .filter(
+      (item) =>
+        typeof item.Latitude === "number" &&
+        typeof item.Longitude === "number",
+    )
+    .slice(0, 20);
+
+  const terrainMapPoints = terrain
+    .filter(
+      (item) =>
+        typeof item.lat === "number" &&
+        typeof item.lon === "number" &&
+        typeof item.terrain_hazard_score === "number",
+    )
+    .sort(
+      (a, b) =>
+        (b.terrain_hazard_score ?? 0) - (a.terrain_hazard_score ?? 0),
+    )
+    .slice(0, 12);
+
+  const satelliteRows = satellites.slice(0, 8);
+
   return (
     <main className="min-h-screen bg-[#081016] text-white">
       <div className="flex min-h-screen">
-
         {/* SIDEBAR */}
-        <aside className="w-[230px] shrink-0 border-r border-[#1c3038] bg-[#0b151b] px-4 py-5">
-
+        <aside className="flex w-[230px] shrink-0 flex-col border-r border-[#1c3038] bg-[#0b151b] px-4 py-5">
           <div className="mb-8 px-2">
             <div className="flex items-center gap-3">
-
               <div className="flex h-9 w-9 items-center justify-center rounded-md border border-cyan-400/40 bg-cyan-400/10 text-sm font-bold text-cyan-300">
                 T
               </div>
-
               <div>
                 <h1 className="text-[18px] font-semibold tracking-[0.18em]">
                   TRINETRA
                 </h1>
-
                 <p className="text-[9px] uppercase tracking-[0.18em] text-slate-500">
                   Terrain Intelligence
                 </p>
               </div>
-
             </div>
           </div>
 
@@ -85,7 +262,6 @@ export default function UpstreamPage() {
           </p>
 
           <nav className="space-y-1">
-
             <a
               href="/"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
@@ -125,7 +301,6 @@ export default function UpstreamPage() {
               <span>⇄</span>
               Relocation
             </a>
-
           </nav>
 
           <p className="mb-3 mt-8 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">
@@ -142,170 +317,198 @@ export default function UpstreamPage() {
             </a>
           </nav>
 
-          <div className="mt-12 rounded-md border border-[#1c3038] bg-[#0e1b22] p-3">
+          <div className="mt-auto pt-12">
+            <div className="rounded-md border border-[#1c3038] bg-[#0e1b22] p-3">
+              <div className="mb-2 flex items-center gap-2">
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    error ? "bg-red-400" : "bg-emerald-400"
+                  }`}
+                />
+                <span
+                  className={`text-xs ${
+                    error ? "text-red-300" : "text-emerald-300"
+                  }`}
+                >
+                  {error ? "CHECK CONNECTION" : "DATA LINK ACTIVE"}
+                </span>
+              </div>
 
-            <div className="mb-2 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
-
-              <span className="text-xs text-emerald-300">
-                SATELLITE LINK ACTIVE
-              </span>
+              <p className="text-[10px] leading-4 text-slate-500">
+                Live river, rainfall, terrain and Sentinel-1 catalogue data
+              </p>
             </div>
-
-            <p className="text-[10px] leading-4 text-slate-500">
-              Monitoring upstream terrain and water-body indicators
-            </p>
-
           </div>
-
         </aside>
 
         {/* MAIN */}
         <section className="flex-1">
-
           {/* HEADER */}
           <header className="flex h-[68px] items-center justify-between border-b border-[#1c3038] bg-[#0b151b] px-6">
-
             <div>
               <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
                 Satellite & Hydrological Monitoring
               </p>
-
               <h2 className="mt-1 text-lg font-medium">
                 Upstream Intelligence
               </h2>
             </div>
 
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => loadData(true)}
+                disabled={refreshing}
+                className="rounded-md border border-[#293d44] px-3 py-2 text-[10px] text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50"
+              >
+                {refreshing ? "REFRESHING..." : "REFRESH"}
+              </button>
 
               <div className="text-right">
-                <p className="text-[10px] text-slate-500">
-                  LAST UPDATE
-                </p>
-
+                <p className="text-[10px] text-slate-500">LAST DATA LOAD</p>
                 <p className="text-xs text-slate-300">
-                  05 Sep 2026 · 16:18 IST
+                  {latestRiver?.["Data Acquisition Time"]
+                    ? formatDate(latestRiver["Data Acquisition Time"])
+                    : latestRainfall?.Date
+                      ? formatDate(latestRainfall.Date)
+                      : "—"}
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 rounded-md border border-emerald-400/20 bg-emerald-400/5 px-3 py-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
-
-                <span className="text-xs text-emerald-300">
-                  MONITORING
+              <div
+                className={`flex items-center gap-2 rounded-md border px-3 py-2 ${
+                  error
+                    ? "border-red-400/20 bg-red-400/5"
+                    : "border-emerald-400/20 bg-emerald-400/5"
+                }`}
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    error ? "bg-red-400" : "bg-emerald-400"
+                  }`}
+                />
+                <span
+                  className={`text-xs ${
+                    error ? "text-red-300" : "text-emerald-300"
+                  }`}
+                >
+                  {error ? "OFFLINE" : loading ? "CONNECTING" : "LIVE"}
                 </span>
               </div>
-
             </div>
-
           </header>
 
           <div className="p-5">
+            {error && (
+              <div className="mb-4 rounded-md border border-red-400/20 bg-red-400/5 px-4 py-3 text-xs text-red-300">
+                {error}
+              </div>
+            )}
 
             {/* TOP CARDS */}
             <div className="grid grid-cols-4 gap-4">
-
               <div className="rounded-lg border border-[#1c3038] bg-[#0d1920] p-5">
-
                 <p className="text-[10px] uppercase tracking-wider text-slate-500">
-                  Upstream Sites
+                  Sentinel-1 Products
                 </p>
-
                 <p className="mt-2 text-3xl font-semibold">
-                  18
+                  {loading ? "--" : satellites.length}
                 </p>
-
                 <p className="mt-3 text-xs text-slate-500">
-                  River, terrain and water-body zones
+                  Copernicus catalogue records
                 </p>
-
               </div>
 
               <div className="rounded-lg border border-[#1c3038] bg-[#0d1920] p-5">
-
                 <p className="text-[10px] uppercase tracking-wider text-slate-500">
                   Active Signals
                 </p>
-
                 <p className="mt-2 text-3xl font-semibold text-orange-400">
-                  5
+                  {loading ? "--" : activeSignals}
                 </p>
-
                 <p className="mt-3 text-xs text-slate-500">
-                  Require additional assessment
+                  High-risk or anomalous returned observations
                 </p>
-
               </div>
 
               <div className="rounded-lg border border-[#1c3038] bg-[#0d1920] p-5">
-
                 <p className="text-[10px] uppercase tracking-wider text-slate-500">
-                  SAR Coverage
+                  River Signal
                 </p>
-
-                <p className="mt-2 text-3xl font-semibold">
-                  96%
+                <div className="mt-2 flex items-end gap-2">
+                  <p className="text-3xl font-semibold">
+                    {loading ? "--" : scoreOf(riverScore)}
+                  </p>
+                  <span className="mb-1 text-xs text-slate-500">/ 100</span>
+                </div>
+                <p
+                  className={`mt-3 text-xs ${levelColor(
+                    latestRiver?.hybrid_risk_category,
+                  )}`}
+                >
+                  {latestRiver?.hybrid_risk_category || "No data"}
                 </p>
-
-                <p className="mt-3 text-xs text-emerald-400">
-                  Cloud-independent monitoring
-                </p>
-
               </div>
 
               <div className="rounded-lg border border-[#1c3038] bg-[#0d1920] p-5">
-
                 <p className="text-[10px] uppercase tracking-wider text-slate-500">
-                  Anomaly Index
+                  Terrain Signal
                 </p>
-
-                <p className="mt-2 text-3xl font-semibold text-yellow-400">
-                  62
+                <div className="mt-2 flex items-end gap-2">
+                  <p className="text-3xl font-semibold text-yellow-400">
+                    {loading ? "--" : scoreOf(terrainScore)}
+                  </p>
+                  <span className="mb-1 text-xs text-slate-500">/ 100</span>
+                </div>
+                <p
+                  className={`mt-3 text-xs ${levelColor(
+                    latestTerrain?.terrain_hazard_level,
+                  )}`}
+                >
+                  {latestTerrain?.terrain_hazard_level || "No data"}
                 </p>
-
-                <p className="mt-3 text-xs text-slate-500">
-                  Moderate upstream signal
-                </p>
-
               </div>
-
             </div>
 
-            {/* SATELLITE PANEL + SIGNALS */}
+            {/* MAP + SIGNALS */}
             <div className="mt-5 grid grid-cols-[1fr_340px] gap-5">
-
-              {/* SATELLITE VIEW */}
+              {/* MONITORING MAP */}
               <div className="overflow-hidden rounded-lg border border-[#1c3038] bg-[#0b171d]">
-
                 <div className="flex items-center justify-between border-b border-[#1c3038] px-4 py-3">
-
                   <div>
                     <h3 className="text-sm font-medium">
                       Upstream Monitoring View
                     </h3>
-
                     <p className="mt-0.5 text-[10px] text-slate-500">
-                      Sentinel-derived terrain and water-body indicators
+                      Real coordinates from returned river and terrain records
                     </p>
                   </div>
 
                   <div className="flex gap-2">
-
-                    <button className="rounded border border-cyan-400/30 bg-cyan-400/10 px-3 py-1.5 text-[10px] text-cyan-300">
-                      SAR
+                    <button
+                      onClick={() => setLayer("SAR")}
+                      className={`rounded border px-3 py-1.5 text-[10px] ${
+                        layer === "SAR"
+                          ? "border-cyan-400/30 bg-cyan-400/10 text-cyan-300"
+                          : "border-[#293d44] text-slate-500"
+                      }`}
+                    >
+                      SAR CATALOGUE
                     </button>
 
-                    <button className="rounded border border-[#293d44] px-3 py-1.5 text-[10px] text-slate-500">
-                      OPTICAL
+                    <button
+                      onClick={() => setLayer("HYDRO")}
+                      className={`rounded border px-3 py-1.5 text-[10px] ${
+                        layer === "HYDRO"
+                          ? "border-cyan-400/30 bg-cyan-400/10 text-cyan-300"
+                          : "border-[#293d44] text-slate-500"
+                      }`}
+                    >
+                      HYDRO / TERRAIN
                     </button>
-
                   </div>
-
                 </div>
 
                 <div className="relative h-[355px] overflow-hidden bg-[#101d20]">
-
-                  {/* GRID */}
                   <div
                     className="absolute inset-0 opacity-20"
                     style={{
@@ -315,26 +518,21 @@ export default function UpstreamPage() {
                     }}
                   />
 
-                  {/* TERRAIN */}
                   <svg
-                    className="absolute inset-0 h-full w-full"
+                    className="absolute inset-0 h-full w-full opacity-30"
                     viewBox="0 0 900 355"
                     preserveAspectRatio="none"
                   >
-
                     <path
                       d="M0 280 L100 210 L170 245 L250 110 L330 180 L410 70 L490 150 L570 55 L650 140 L730 80 L810 175 L900 100 L900 355 L0 355 Z"
                       fill="#18292c"
                     />
-
                     <path
                       d="M0 280 L100 210 L170 245 L250 110 L330 180 L410 70 L490 150 L570 55 L650 140 L730 80 L810 175 L900 100"
                       fill="none"
                       stroke="#4a6469"
                       strokeWidth="2"
                     />
-
-                    {/* river */}
                     <path
                       d="M580 0 C540 65 620 90 570 145 C520 200 590 230 530 275 C480 315 500 340 460 355"
                       fill="none"
@@ -342,321 +540,464 @@ export default function UpstreamPage() {
                       strokeWidth="4"
                       opacity="0.65"
                     />
-
-                    {/* anomaly zone */}
-                    <path
-                      d="M230 120 C270 85 330 100 355 145 C335 185 285 190 245 165 Z"
-                      fill="#f97316"
-                      opacity="0.22"
-                    />
-
-                    <path
-                      d="M550 60 C600 40 650 70 665 110 C640 140 590 135 555 110 Z"
-                      fill="#facc15"
-                      opacity="0.18"
-                    />
-
                   </svg>
 
-                  {/* LABELS */}
-                  <div className="absolute left-[25%] top-[28%]">
-
-                    <div className="flex items-center gap-2">
-
-                      <span className="h-3 w-3 rounded-full bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.7)]"></span>
-
-                      <span className="text-xs font-medium">
-                        Terrain anomaly
-                      </span>
-
-                    </div>
-
-                    <p className="ml-5 text-[9px] text-orange-400">
-                      MODERATE SIGNAL
-                    </p>
-
-                  </div>
-
-                  <div className="absolute left-[61%] top-[20%]">
-
-                    <div className="flex items-center gap-2">
-
-                      <span className="h-3 w-3 rounded-full bg-yellow-400"></span>
-
-                      <span className="text-xs font-medium">
-                        Water-body change
-                      </span>
-
-                    </div>
-
-                    <p className="ml-5 text-[9px] text-yellow-400">
-                      WATCH
-                    </p>
-
-                  </div>
-
-                  <div className="absolute bottom-5 left-5 rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2">
-
-                    <p className="text-[9px] text-slate-600">
-                      CURRENT LAYER
-                    </p>
-
-                    <p className="mt-1 text-[10px] text-cyan-300">
-                      SENTINEL-1 · SAR BACKSCATTER
-                    </p>
-
-                  </div>
-
-                  <div className="absolute right-5 top-5 rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2">
-
-                    <p className="text-[9px] text-slate-600">
-                      AOI
-                    </p>
-
+                  <div className="absolute left-5 top-5 rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2">
+                    <p className="text-[9px] text-slate-600">STUDY AREA</p>
                     <p className="mt-1 text-[10px] text-slate-300">
                       30.50–30.80° N
                     </p>
-
                     <p className="text-[10px] text-slate-300">
                       79.40–79.75° E
                     </p>
-
                   </div>
 
-                </div>
+                  <div className="absolute right-5 top-5 rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2 text-right">
+                    <p className="text-[9px] text-slate-600">LAYER</p>
+                    <p className="mt-1 text-[10px] text-cyan-300">
+                      {layer === "SAR"
+                        ? "SENTINEL-1 CATALOGUE"
+                        : "HYDRO + TERRAIN"}
+                    </p>
+                  </div>
 
+                  {layer === "HYDRO" &&
+                    riverMapPoints.map((river, index) => {
+                      const position = mapPosition(
+                        river.Latitude!,
+                        river.Longitude!,
+                      );
+                      const level =
+                        river.hybrid_risk_category || river.risk_category;
+
+                      return (
+                        <div
+                          key={`river-${index}`}
+                          className="absolute"
+                          style={position}
+                          title={`${river.Station || "River station"} · ${scoreOf(
+                            river.hybrid_hazard_score,
+                          )} · ${level || "—"}`}
+                        >
+                          <div className="relative -translate-x-1/2 -translate-y-1/2">
+                            <div
+                              className={`h-3 w-3 rounded-full border border-white/60 ${levelBg(
+                                level,
+                              )} shadow-[0_0_12px_rgba(34,211,238,0.3)]`}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                  {layer === "HYDRO" &&
+                    terrainMapPoints.map((point, index) => {
+                      const position = mapPosition(point.lat!, point.lon!);
+
+                      return (
+                        <div
+                          key={`terrain-${point.cell_id || index}`}
+                          className="absolute"
+                          style={position}
+                          title={`Terrain · ${scoreOf(
+                            point.terrain_hazard_score,
+                          )} · ${point.terrain_hazard_level || "—"}`}
+                        >
+                          <div className="relative -translate-x-1/2 -translate-y-1/2">
+                            <div className="h-2 w-2 rounded-full border border-white/30 bg-yellow-300/80" />
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                  {layer === "SAR" && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="max-w-sm rounded-md border border-cyan-400/20 bg-[#081016]/90 p-5 text-center">
+                        <p className="text-xs font-medium text-cyan-300">
+                          SENTINEL-1 SAR CATALOGUE
+                        </p>
+                        <p className="mt-2 text-[10px] leading-4 text-slate-500">
+                          {satellites.length} Sentinel-1 products were returned
+                          by the Copernicus catalogue for the configured
+                          study area and recent search window.
+                        </p>
+                        <p className="mt-3 text-[10px] text-slate-600">
+                          Catalogue metadata is shown below.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="absolute bottom-5 left-5 rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2">
+                    <p className="text-[9px] text-slate-600">CURRENT LAYER</p>
+                    <p className="mt-1 text-[10px] text-cyan-300">
+                      {layer === "SAR"
+                        ? "COPERNICUS · SENTINEL-1"
+                        : `${riverMapPoints.length} river + ${terrainMapPoints.length} terrain points`}
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* SIGNAL PANEL */}
               <div className="rounded-lg border border-[#1c3038] bg-[#0d1920]">
-
                 <div className="border-b border-[#1c3038] px-4 py-3">
-
                   <h3 className="text-sm font-medium">
-                    Upstream Indicators
+                    Current Upstream Signals
                   </h3>
-
                   <p className="mt-1 text-[10px] text-slate-500">
-                    Current signals from monitored sources
+                    Values calculated from returned backend observations
                   </p>
-
                 </div>
 
                 <div className="divide-y divide-[#1c3038]">
-
-                  {indicators.map((indicator) => (
-                    <div
-                      key={indicator.name}
-                      className="p-4"
-                    >
-
+                  {[
+                    {
+                      name: "River / Hydrology",
+                      score: riverScore,
+                      level:
+                        latestRiver?.hybrid_risk_category ||
+                        latestRiver?.risk_category,
+                      description:
+                        latestRiver?.anomaly_label || "No anomaly label",
+                    },
+                    {
+                      name: "Rainfall",
+                      score: rainfallScore,
+                      level:
+                        latestRainfall?.hazard_category ||
+                        latestRainfall?.risk_category,
+                      description:
+                        latestRainfall?.anomaly_label || "No anomaly label",
+                    },
+                    {
+                      name: "Terrain",
+                      score: terrainScore,
+                      level: latestTerrain?.terrain_hazard_level,
+                      description: "DEM-derived susceptibility",
+                    },
+                  ].map((indicator) => (
+                    <div key={indicator.name} className="p-4">
                       <div className="flex items-center justify-between">
-
                         <span className="text-xs text-slate-300">
                           {indicator.name}
                         </span>
-
-                        <span className="text-sm font-medium">
-                          {indicator.score}
+                        <span
+                          className={`text-sm font-medium ${levelColor(
+                            indicator.level,
+                          )}`}
+                        >
+                          {scoreOf(indicator.score)}
                         </span>
-
                       </div>
 
                       <div className="mt-3 h-1.5 rounded-full bg-[#1b2930]">
-
                         <div
-                          className={`h-full rounded-full ${
-                            indicator.score >= 70
-                              ? "w-[72%] bg-orange-400"
-                              : indicator.score >= 55
-                              ? "w-[61%] bg-yellow-400"
-                              : "w-[43%] bg-emerald-400"
-                          }`}
-                        ></div>
-
+                          className={`h-full rounded-full ${levelBg(
+                            indicator.level,
+                          )}`}
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              Math.max(0, indicator.score ?? 0),
+                            )}%`,
+                          }}
+                        />
                       </div>
 
-                      <p className="mt-2 text-[9px] text-slate-600">
-                        {indicator.description}
-                      </p>
-
+                      <div className="mt-2 flex items-center justify-between">
+                        <p className="text-[9px] text-slate-600">
+                          {indicator.description}
+                        </p>
+                        <span
+                          className={`text-[9px] ${levelColor(
+                            indicator.level,
+                          )}`}
+                        >
+                          {indicator.level || "—"}
+                        </span>
+                      </div>
                     </div>
                   ))}
 
+                  <div className="p-4">
+                    <p className="text-[9px] uppercase tracking-wider text-slate-600">
+                      Sentinel-1
+                    </p>
+                    <p className="mt-2 text-xs text-slate-300">
+                      {satellites.length} catalogue products
+                    </p>
+                    <p className="mt-1 text-[10px] leading-4 text-slate-600">
+                      Catalogue availability is not itself an anomaly score.
+                    </p>
+                  </div>
                 </div>
-
               </div>
-
             </div>
 
-            {/* SITE TABLE */}
+            {/* HYDROLOGY DETAIL */}
+            <div className="mt-5 grid grid-cols-2 gap-5">
+              <div className="rounded-lg border border-[#1c3038] bg-[#0d1920] p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium">Latest River Signal</h3>
+                    <p className="mt-1 text-[10px] text-slate-500">
+                      Returned CWC hydrology observation
+                    </p>
+                  </div>
+
+                  <span
+                    className={`text-[10px] font-medium ${levelColor(
+                      latestRiver?.hybrid_risk_category ||
+                        latestRiver?.risk_category,
+                    )}`}
+                  >
+                    {latestRiver?.hybrid_risk_category ||
+                      latestRiver?.risk_category ||
+                      "—"}
+                  </span>
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[9px] uppercase text-slate-600">
+                      Station
+                    </p>
+                    <p className="mt-1 text-xs text-slate-200">
+                      {latestRiver?.Station || "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[9px] uppercase text-slate-600">
+                      Discharge
+                    </p>
+                    <p className="mt-1 text-xs text-slate-200">
+                      {typeof latestRiver?.[
+                        "Telemetry Hourly River Water Discharge (m3/sec)"
+                      ] === "number"
+                        ? `${latestRiver["Telemetry Hourly River Water Discharge (m3/sec)"].toFixed(
+                            2,
+                          )} m³/s`
+                        : "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[9px] uppercase text-slate-600">
+                      Change
+                    </p>
+                    <p className="mt-1 text-xs text-slate-200">
+                      {typeof latestRiver?.discharge_change_m3s === "number"
+                        ? `${latestRiver.discharge_change_m3s >= 0 ? "+" : ""}${latestRiver.discharge_change_m3s.toFixed(
+                            2,
+                          )} m³/s`
+                        : "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[9px] uppercase text-slate-600">
+                      Rate of change
+                    </p>
+                    <p className="mt-1 text-xs text-slate-200">
+                      {typeof latestRiver?.discharge_rate_m3s_per_hour ===
+                      "number"
+                        ? `${latestRiver.discharge_rate_m3s_per_hour >= 0 ? "+" : ""}${latestRiver.discharge_rate_m3s_per_hour.toFixed(
+                            2,
+                          )} m³/s/hr`
+                        : "—"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-[#1c3038] bg-[#0d1920] p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium">
+                      Latest Rainfall Signal
+                    </h3>
+                    <p className="mt-1 text-[10px] text-slate-500">
+                      Returned processed rainfall observation
+                    </p>
+                  </div>
+
+                  <span
+                    className={`text-[10px] font-medium ${levelColor(
+                      latestRainfall?.hazard_category ||
+                        latestRainfall?.risk_category,
+                    )}`}
+                  >
+                    {latestRainfall?.hazard_category ||
+                      latestRainfall?.risk_category ||
+                      "—"}
+                  </span>
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[9px] uppercase text-slate-600">
+                      District
+                    </p>
+                    <p className="mt-1 text-xs text-slate-200">
+                      {latestRainfall?.District || "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[9px] uppercase text-slate-600">
+                      Daily actual
+                    </p>
+                    <p className="mt-1 text-xs text-slate-200">
+                      {typeof latestRainfall?.["Daily Actual"] === "number"
+                        ? `${latestRainfall["Daily Actual"].toFixed(1)} mm`
+                        : "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[9px] uppercase text-slate-600">
+                      Daily normal
+                    </p>
+                    <p className="mt-1 text-xs text-slate-200">
+                      {typeof latestRainfall?.["Daily Normal"] === "number"
+                        ? `${latestRainfall["Daily Normal"].toFixed(1)} mm`
+                        : "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[9px] uppercase text-slate-600">
+                      Departure
+                    </p>
+                    <p className="mt-1 text-xs text-slate-200">
+                      {latestRainfall?.["Daily Departure Per"] !== undefined &&
+                      latestRainfall?.["Daily Departure Per"] !== null
+                        ? `${latestRainfall["Daily Departure Per"]}%`
+                        : "—"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SENTINEL TABLE */}
             <div className="mt-5 rounded-lg border border-[#1c3038] bg-[#0d1920]">
-
               <div className="flex items-center justify-between border-b border-[#1c3038] px-4 py-3">
-
                 <div>
                   <h3 className="text-sm font-medium">
-                    Monitored Upstream Zones
+                    Recent Sentinel-1 Products
                   </h3>
-
                   <p className="mt-1 text-[10px] text-slate-500">
-                    Recent changes detected across the upstream area
+                    Copernicus catalogue metadata returned by the backend
                   </p>
                 </div>
 
-                <button className="rounded border border-[#293d44] px-3 py-1.5 text-[10px] text-slate-400 hover:bg-white/5 hover:text-white">
-                  VIEW ALL
-                </button>
-
+                <span className="text-[10px] text-cyan-300">
+                  {satellites.length} returned
+                </span>
               </div>
 
-              <table className="w-full text-left">
-
-                <thead className="border-b border-[#1c3038]">
-
-                  <tr className="text-[9px] uppercase tracking-wider text-slate-600">
-
-                    <th className="px-4 py-3 font-medium">
-                      Monitoring Zone
-                    </th>
-
-                    <th className="px-4 py-3 font-medium">
-                      Type
-                    </th>
-
-                    <th className="px-4 py-3 font-medium">
-                      Current Signal
-                    </th>
-
-                    <th className="px-4 py-3 font-medium">
-                      Change
-                    </th>
-
-                    <th className="px-4 py-3 font-medium">
-                      Status
-                    </th>
-
-                  </tr>
-
-                </thead>
-
-                <tbody className="divide-y divide-[#1c3038]">
-
-                  {upstreamSites.map((site) => (
-
-                    <tr
-                      key={site.name}
-                      className="hover:bg-white/[0.02]"
-                    >
-
-                      <td className="px-4 py-3 text-xs text-slate-200">
-                        {site.name}
-                      </td>
-
-                      <td className="px-4 py-3 text-xs text-slate-500">
-                        {site.type}
-                      </td>
-
-                      <td className="px-4 py-3 text-xs text-slate-300">
-                        {site.value}
-                      </td>
-
-                      <td className="px-4 py-3 text-xs text-slate-400">
-                        {site.change}
-                      </td>
-
-                      <td className="px-4 py-3">
-
-                        <span
-                          className={`text-[9px] font-medium ${
-                            site.status === "WATCH"
-                              ? "text-orange-400"
-                              : "text-emerald-400"
-                          }`}
-                        >
-                          ● {site.status}
-                        </span>
-
-                      </td>
-
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="border-b border-[#1c3038]">
+                    <tr className="text-[9px] uppercase tracking-wider text-slate-600">
+                      <th className="px-4 py-3 font-medium">Product</th>
+                      <th className="px-4 py-3 font-medium">Acquisition</th>
+                      <th className="px-4 py-3 font-medium">Published</th>
+                      <th className="px-4 py-3 font-medium">Sensor</th>
                     </tr>
+                  </thead>
 
-                  ))}
+                  <tbody className="divide-y divide-[#1c3038]">
+                    {satelliteRows.map((product, index) => (
+                      <tr
+                        key={product.Id || index}
+                        className="hover:bg-white/[0.02]"
+                      >
+                        <td className="max-w-[420px] truncate px-4 py-3 text-xs text-slate-200">
+                          {product.Name || "Sentinel-1 product"}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-400">
+                          {formatDate(product.ContentDate?.Start)}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-500">
+                          {formatDate(product.PublicationDate)}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-cyan-300">
+                          SENTINEL-1 · SAR
+                        </td>
+                      </tr>
+                    ))}
 
-                </tbody>
-
-              </table>
-
+                    {!loading && satelliteRows.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          className="px-4 py-8 text-center text-xs text-slate-600"
+                        >
+                          No Sentinel-1 products returned.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            {/* BOTTOM INFO */}
+            {/* INTERPRETATION */}
             <div className="mt-5 grid grid-cols-3 gap-4">
-
               <div className="rounded-lg border border-[#1c3038] bg-[#0d1920] p-4">
-
                 <p className="text-[9px] uppercase tracking-wider text-slate-600">
-                  Satellite
+                  Sentinel-1
                 </p>
-
                 <p className="mt-2 text-xs text-slate-300">
-                  Sentinel-1 SAR
+                  Weather-resistant surface observation
                 </p>
-
-                <p className="mt-1 text-[10px] text-slate-600">
-                  Useful for cloud-independent surface monitoring
+                <p className="mt-1 text-[10px] leading-4 text-slate-600">
+                  Current backend integration provides Copernicus catalogue
+                  products for the configured AOI.
                 </p>
-
               </div>
 
               <div className="rounded-lg border border-[#1c3038] bg-[#0d1920] p-4">
-
                 <p className="text-[9px] uppercase tracking-wider text-slate-600">
-                  Optical
+                  Hydrology
                 </p>
-
                 <p className="mt-2 text-xs text-slate-300">
-                  Sentinel-2
+                  CWC discharge + anomaly features
                 </p>
-
-                <p className="mt-1 text-[10px] text-slate-600">
-                  Used for vegetation and water-body change
+                <p className="mt-1 text-[10px] leading-4 text-slate-600">
+                  River observations include discharge, rate-of-change,
+                  anomaly and hybrid hazard fields.
                 </p>
-
               </div>
 
               <div className="rounded-lg border border-[#1c3038] bg-[#0d1920] p-4">
-
                 <p className="text-[9px] uppercase tracking-wider text-slate-600">
                   Interpretation
                 </p>
-
                 <p className="mt-2 text-xs text-slate-300">
-                  Indicator / anomaly analysis
+                  Evidence, not automatic disaster confirmation
                 </p>
-
-                <p className="mt-1 text-[10px] text-slate-600">
-                  Signals require model and ground-data validation
+                <p className="mt-1 text-[10px] leading-4 text-slate-600">
+                  Satellite change should be cross-checked with rainfall,
+                  river, terrain and location context.
                 </p>
-
               </div>
-
             </div>
 
             {/* FOOTER */}
             <div className="mt-5 flex items-center justify-between border-t border-[#1c3038] pt-4">
-
               <p className="text-[9px] text-slate-600">
                 TRINETRA · Upstream Intelligence
               </p>
-
               <p className="text-[9px] text-slate-600">
-                DEMO DATA · Replace with satellite pipeline
+                Live data from /api/hazards
               </p>
-
             </div>
-
           </div>
-
         </section>
       </div>
     </main>

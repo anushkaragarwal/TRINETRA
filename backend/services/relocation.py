@@ -1,3 +1,5 @@
+
+
 import os
 from pathlib import Path
 
@@ -116,6 +118,65 @@ def get_relocation_summary():
         "hospitals": db["hospitals"].count_documents({}),
         "emergency_capabilities": db["emergency_capabilities"].count_documents({}),
     }
+
+def get_safe_sites(limit=2000):
+    db = get_db()
+
+    # Return the complete screened site dataset (currently ~1k records).
+    # The frontend sorts/renders the returned records; Mongo remains the
+    # source of truth for the site values.
+    records = list(
+        db["safe_sites"]
+        .find({}, {"_id": 0})
+        .sort("safe_site_score", -1)
+        .limit(limit)
+    )
+
+    high = 0
+    medium = 0
+    low = 0
+    total_capacity = 0
+    best_score = None
+    mapped = 0
+
+    for item in records:
+        status = item.get("site_status")
+        if status == "HIGH_SUITABILITY":
+            high += 1
+        elif status == "MEDIUM_SUITABILITY":
+            medium += 1
+        elif status == "LOW_SUITABILITY":
+            low += 1
+
+        capacity = item.get("available_capacity")
+        if isinstance(capacity, (int, float)):
+            total_capacity += capacity
+
+        score = item.get("safe_site_score")
+        if isinstance(score, (int, float)):
+            best_score = score if best_score is None else max(best_score, score)
+
+        lat = item.get("latitude")
+        lon = item.get("longitude")
+        if isinstance(lat, (int, float)) and isinstance(lon, (int, float)):
+            mapped += 1
+
+    return {
+        "status": "ok",
+        "count": len(records),
+        "total_count": db["safe_sites"].count_documents({}),
+        "sites": records,
+        "summary": {
+            "total_sites": len(records),
+            "high_suitability_sites": high,
+            "medium_suitability_sites": medium,
+            "low_suitability_sites": low,
+            "total_available_capacity": total_capacity,
+            "best_safety_score": best_score,
+            "mapped_sites": mapped,
+        },
+    }
+
 def get_top_relocations(limit=20):
     db = get_db()
 

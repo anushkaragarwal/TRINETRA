@@ -1,21 +1,32 @@
 import os
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
 from backend.services.river import get_latest_river, refresh_river
 from backend.services.rainfall import get_latest_rainfall, refresh_rainfall
 from backend.services.satellite import get_latest_satellite, refresh_satellite
 from backend.services.terrain import get_latest_terrain, refresh_terrain
 from backend.services.hazard_zones import get_hazard_zones
+from backend.services.settlement_risk import get_settlement_risk
 from backend.services.relocation import (
     refresh_relocation_data,
     get_relocation_summary,
     get_top_relocations,
-    get_relocation_decisions
+    get_relocation_decisions,
+    get_safe_sites
 )
 load_dotenv()
 
 app = FastAPI(title="TRINETRA API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 MONGODB_URI = os.getenv("MONGODB_URI")
 MONGODB_DB = os.getenv("MONGODB_DB", "trinetra")
@@ -208,6 +219,11 @@ def refresh_relocation():
     return refresh_relocation_data()
 
 
+
+@app.get("/api/safe-sites")
+def safe_sites(limit: int = 2000):
+    return get_safe_sites(limit)
+
 @app.get("/api/relocation/summary")
 def relocation_summary():
     return get_relocation_summary()
@@ -217,3 +233,7 @@ def top_relocations(limit: int = 20):
 @app.get("/api/relocation/decisions")
 def relocation_decisions(limit: int = 20):
     return get_relocation_decisions(limit)
+
+@app.get("/api/risk/settlements")
+def risk_settlements(limit: int = 8):
+    return get_settlement_risk(limit)
