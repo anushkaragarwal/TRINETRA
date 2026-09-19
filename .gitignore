@@ -65,4 +65,7 @@ htmlcov/
 # Local generated files
 downloads/
 tmp/
-temp/
+data/features/dem_landslide_integrated_features.csv
+data/features/landslide_predictions.csv
+data/features/landslide_susceptibility.csv
+data/features/landslide_hazard_features.csv
