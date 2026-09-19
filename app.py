@@ -159,11 +159,11 @@ def main():
     event = df.iloc[0]
 
     hydrological_score = float(
-        event["hydrological_risk_score_0_100"]
+        event["river_risk_score_0_100"]
     )
 
     terrain_score = float(
-        event["terrain_hazard_score_0_100"]
+        event["landslide_hazard_score_0_100"]
     )
 
     trinetra_score = float(
@@ -179,7 +179,7 @@ def main():
     )
 
     hydrological_level = str(
-        event["hydrological_risk_level"]
+        event["river_risk_level"]
     )
 
     satellite_class = str(
@@ -534,14 +534,14 @@ def main():
 
     with col4:
         terrain_level = str(
-            event["terrain_hazard_level"]
+            event["landslide_hazard_level"]
         )
 
         st.metric(
-            label="Terrain Hazard Score",
+            label="Landslide Hazard Score",
             value=f"{terrain_score:.0f} / 100",
             help=(
-                "Local DEM-derived terrain hazard score "
+                "Landslide susceptibility/hazard score derived from the trained landslide model "
                 "calculated around the event."
             ),
             border=True,
@@ -566,7 +566,7 @@ def main():
 
     st.info(
         "TRINETRA Hazard Score combines hydrological risk "
-        "and local DEM-derived terrain hazard. Satellite "
+        "and landslide hazard. Satellite "
         "evidence is shown separately as supporting evidence."
     )
 
@@ -578,7 +578,7 @@ def main():
         f"⚠️ **TRINETRA hazard level: {trinetra_level}.** "
         f"Combined hazard score is **{trinetra_score:.1f}/100**, "
         f"based on hydrological risk (**{hydrological_score:.1f}/100**) "
-        f"and local DEM terrain hazard (**{terrain_score:.1f}/100**). "
+        f"and landslide hazard (**{terrain_score:.1f}/100**). "
         "Satellite evidence remains a separate supporting indicator."
     )
 
@@ -705,7 +705,7 @@ def main():
             "Data source": [
                 "TRINETRA combined hazard",
                 "River hydrology model",
-                "DEM terrain analysis",
+                "Landslide analysis",
                 "Sentinel-2 optical imagery",
                 "Sentinel-1 SAR imagery",
             ],
@@ -738,7 +738,7 @@ def main():
             "Interpretation": [
                 "Combined MVP hazard index using hydrological and local DEM terrain components.",
                 "Dynamic river-hydrology hazard condition.",
-                "Local DEM-derived terrain hazard condition.",
+                "Landslide hazard condition derived from the trained model.",
                 "Optical satellite evidence for post-event water change.",
                 "SAR satellite evidence for post-event water change.",
             ],
