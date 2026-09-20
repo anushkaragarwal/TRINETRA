@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2" xmlns:ns2="http://www.google.com/kml/ext/2.2" xmlns:ns3="http://www.w3.org/2005/Atom" xmlns:ns4="urn:oasis:names:tc:ciq:xsdschema:xAL:2.0">
+    <Document>
+        <LookAt>
+            <longitude>79.5747285100908</longitude>
+            <latitude>30.650117210240843</latitude>
+            <altitude>58489.68230822751</altitude>
+            <heading>0.0</heading>
+            <tilt>0.0</tilt>
+            <range>47262.731186581004</range>
+            <altitudeMode>clampToGround</altitudeMode>
+        </LookAt>
+        <Folder>
+            <name>UK_SLIM_2017</name>
+            <LookAt>
+                <longitude>79.56583403087483</longitude>
+                <latitude>30.59283440270365</latitude>
+                <altitude>40821.16483166206</altitude>
+                <heading>0.0</heading>
+                <tilt>0.0</tilt>
+                <range>32985.642322262516</range>
+                <altitudeMode>clampToGround</altitudeMode>
+            </LookAt>
+            <Placemark id="UK_SLIM_2017.33">
+                <name>UK_SLIM_2017.33</name>
+                <description>&lt;h4&gt;UK_SLIM_2017&lt;/h4&gt;
+
+&lt;ul class="textattributes"&gt;
+  
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;SlideNo&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;UK/CL/53N07/2017/15&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;State&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Uttarakhand&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;District&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;CHAMOLI&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Toposheet&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;53N07&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Latitude&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;30.4928&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Longitude&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;79.4485&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Length_m&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;47.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Width_m&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;19.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Height_m&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;28.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Area_Sqm&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;682.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Activity&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Active&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Geomorph&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Structural Hill Highlly Dissected&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Lithology&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Metamorphic  Rocks&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;LULC&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Evergreen / Semi evergreen&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Triggering&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Rainfall&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Year&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;2017.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Basin&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Ganga Basin&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Sub_Basin&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Above Ramganga Confluence&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Source&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;RESOURCESAT-2 LISS IV, 10m CARTODEM, RGNDW 50k, LULC 50k (2011-12) &amp; India-WRIS&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+                <LookAt>
+                    <longitude>79.42557634425587</longitude>
+                    <latitude>30.515332477745915</latitude>
+                    <altitude>62.934648659277386</altitude>
+                    <heading>0.0</heading>
+                    <tilt>0.0</tilt>
+                    <range>50.854497144138904</range>
+                    <altitudeMode>clampToGround</altitudeMode>
+                </LookAt>
+                <Style>
+                    <IconStyle>
+                        <color>00ffffff</color>
+                        <scale>0.4</scale>
+                        <heading>0.0</heading>
+                        <Icon>
+                            <href>http://icons.opengeo.org/markers/icon-poly.1.png</href>
+                        </Icon>
+                    </IconStyle>
+                    <LabelStyle>
+                        <color>00ffffff</color>
+                        <scale>0.0</scale>
+                    </LabelStyle>
+                    <LineStyle>
+                        <color>ffe600ff</color>
+                        <width>5.0</width>
+                    </LineStyle>
+                    <PolyStyle>
+                        <color>ffe600ff</color>
+                        <outline>1</outline>
+                    </PolyStyle>
+                </Style>
+                <MultiGeometry>
+                    <Point>
+                        <coordinates>79.42558131503363,30.515343560233305</coordinates>
+                    </Point>
+                    <Polygon>
+                        <outerBoundaryIs>
+                            <LinearRing>
+                                <tessellate>1</tessellate>
+                                <coordinates>79.42542344975956,30.515184128738916 79.425374343543,30.515237245912232 79.42539424850976,30.515285229233218 79.42542793651062,30.5153333791156 79.42545492541021,30.515369512342346 79.42551627570978,30.515412028638533 79.42557772224482,30.515448578223364 79.4256601319139,30.515467477538852 79.42573574626954,30.51548032685317 79.4257770953849,30.515480826441372 79.42577834558529,30.51540325954096 79.42575164506576,30.515349226322957 79.42564933036296,30.51528234378423 79.42542344975956,30.515184128738916</coordinates>
+                            </LinearRing>
+                        </outerBoundaryIs>
+                    </Polygon>
+                </MultiGeometry>
+            </Placemark>
+            <Placemark id="UK_SLIM_2017.403">
+                <name>UK_SLIM_2017.403</name>
+                <description>&lt;h4&gt;UK_SLIM_2017&lt;/h4&gt;
+
+&lt;ul class="textattributes"&gt;
+  
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;SlideNo&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;UK/PI/62B04/2017/4&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;State&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Uttarakhand&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;District&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;PITHORAGARH&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Toposheet&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;62B04&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Latitude&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;30.0575&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Longitude&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;80.2384&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Length_m&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;59.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Width_m&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;36.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Height_m&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;39.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Area_Sqm&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;1357.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Activity&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Active&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Geomorph&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Structural Hill Highlly Dissected&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Lithology&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Metamorphic  Rocks&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;LULC&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Evergreen / Semi evergreen&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Triggering&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Rainfall&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Year&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;2017.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Basin&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Ganga Basin&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Sub_Basin&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Ghaghara&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Source&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;RESOURCESAT-2 LISS IV, 10m CARTODEM, RGNDW 50k, LULC 50k (2011-12) &amp; India-WRIS&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+                <LookAt>
+                    <longitude>79.56822766708136</longitude>
+                    <latitude>30.56404126316241</latitude>
+                    <altitude>86.1073158060867</altitude>
+                    <heading>0.0</heading>
+                    <tilt>0.0</tilt>
+                    <range>69.5792276438583</range>
+                    <altitudeMode>clampToGround</altitudeMode>
+                </LookAt>
+                <Style>
+                    <IconStyle>
+                        <color>00ffffff</color>
+                        <scale>0.4</scale>
+                        <heading>0.0</heading>
+                        <Icon>
+                            <href>http://icons.opengeo.org/markers/icon-poly.1.png</href>
+                        </Icon>
+                    </IconStyle>
+                    <LabelStyle>
+                        <color>00ffffff</color>
+                        <scale>0.0</scale>
+                    </LabelStyle>
+                    <LineStyle>
+                        <color>ffe600ff</color>
+                        <width>5.0</width>
+                    </LineStyle>
+                    <PolyStyle>
+                        <color>ffe600ff</color>
+                        <outline>1</outline>
+                    </PolyStyle>
+                </Style>
+                <MultiGeometry>
+                    <Point>
+                        <coordinates>79.56819594811626,30.564068955949523</coordinates>
+                    </Point>
+                    <Polygon>
+                        <outerBoundaryIs>
+                            <LinearRing>
+                                <tessellate>1</tessellate>
+                                <coordinates>79.56794340746765,30.563960495700723 79.56806363297135,30.564226797158412 79.56826211571563,30.564236141870957 79.56851192783701,30.56413146522541 79.56842269603918,30.564008736876186 79.56810135867995,30.563912102018897 79.567986462763,30.56384638383636 79.56794340746765,30.563960495700723</coordinates>
+                            </LinearRing>
+                        </outerBoundaryIs>
+                    </Polygon>
+                </MultiGeometry>
+            </Placemark>
+            <Placemark id="UK_SLIM_2017.404">
+                <name>UK_SLIM_2017.404</name>
+                <description>&lt;h4&gt;UK_SLIM_2017&lt;/h4&gt;
+
+&lt;ul class="textattributes"&gt;
+  
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;SlideNo&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;UK/PI/62C01/2017/5&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;State&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Uttarakhand&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;District&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;PITHORAGARH&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Toposheet&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;62C01&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Latitude&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;29.8415&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Longitude&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;80.0556&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Length_m&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;116.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Width_m&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;43.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Height_m&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;30.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Area_Sqm&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;3647.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Activity&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Active&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Geomorph&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Structural Hill Highlly Dissected&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Lithology&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Metamorphic  Rocks&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;LULC&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Evergreen / Semi evergreen&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Triggering&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Rainfall&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Year&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;2017.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Basin&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Ganga Basin&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Sub_Basin&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Ghaghara&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Source&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;RESOURCESAT-2 LISS IV, 10m CARTODEM, RGNDW 50k, LULC 50k (2011-12) &amp; India-WRIS&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+                <LookAt>
+                    <longitude>79.44033521648413</longitude>
+                    <latitude>30.670011674861726</latitude>
+                    <altitude>161.8046861376444</altitude>
+                    <heading>0.0</heading>
+                    <tilt>0.0</tilt>
+                    <range>130.74667332526917</range>
+                    <altitudeMode>clampToGround</altitudeMode>
+                </LookAt>
+                <Style>
+                    <IconStyle>
+                        <color>00ffffff</color>
+                        <scale>0.4</scale>
+                        <heading>0.0</heading>
+                        <Icon>
+                            <href>http://icons.opengeo.org/markers/icon-poly.1.png</href>
+                        </Icon>
+                    </IconStyle>
+                    <LabelStyle>
+                        <color>00ffffff</color>
+                        <scale>0.0</scale>
+                    </LabelStyle>
+                    <LineStyle>
+                        <color>ffe600ff</color>
+                        <width>5.0</width>
+                    </LineStyle>
+                    <PolyStyle>
+                        <color>ffe600ff</color>
+                        <outline>1</outline>
+                    </PolyStyle>
+                </Style>
+                <MultiGeometry>
+                    <Point>
+                        <coordinates>79.44035713617392,30.6700600278167</coordinates>
+                    </Point>
+                    <Polygon>
+                        <outerBoundaryIs>
+                            <LinearRing>
+                                <tessellate>1</tessellate>
+                                <coordinates>79.44060619930515,30.66970359894697 79.44027925130064,30.66994315763168 79.43992078060697,30.670082078957314 79.43975304874095,30.670208967649142 79.43975983566311,30.670302145817896 79.44003294572201,30.670319748181203 79.44042316884166,30.670267143147136 79.4406409431835,30.670119370409257 79.4407995857168,30.67004250043152 79.4409173879401,30.669929333712147 79.4407702489511,30.669805825977697 79.44067188813078,30.669740193841193 79.44060619930515,30.66970359894697</coordinates>
+                            </LinearRing>
+                        </outerBoundaryIs>
+                    </Polygon>
+                </MultiGeometry>
+            </Placemark>
+            <Placemark id="UK_SLIM_2017.405">
+                <name>UK_SLIM_2017.405</name>
+                <description>&lt;h4&gt;UK_SLIM_2017&lt;/h4&gt;
+
+&lt;ul class="textattributes"&gt;
+  
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;SlideNo&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;UK/PI/53O14/2017/6&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;State&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Uttarakhand&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;District&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;PITHORAGARH&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Toposheet&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;53O14&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Latitude&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;29.6834&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Longitude&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;79.9512&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Length_m&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;157.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Width_m&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;35.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Height_m&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;132.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Area_Sqm&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;3728.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Activity&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Active&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Geomorph&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;River Valley&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Lithology&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;River valley&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;LULC&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Scrub Forest&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Triggering&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Rainfall&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Year&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;2017.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Basin&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Ganga Basin&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Sub_Basin&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Ghaghara&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Source&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;RESOURCESAT-2 LISS IV, 10m CARTODEM, RGNDW 50k, LULC 50k (2011-12) &amp; India-WRIS&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+                <LookAt>
+                    <longitude>79.71200492913596</longitude>
+                    <latitude>30.53676784934929</latitude>
+                    <altitude>201.36093977600376</altitude>
+                    <heading>0.0</heading>
+                    <tilt>0.0</tilt>
+                    <range>162.7102010566382</range>
+                    <altitudeMode>clampToGround</altitudeMode>
+                </LookAt>
+                <Style>
+                    <IconStyle>
+                        <color>00ffffff</color>
+                        <scale>0.4</scale>
+                        <heading>0.0</heading>
+                        <Icon>
+                            <href>http://icons.opengeo.org/markers/icon-poly.1.png</href>
+                        </Icon>
+                    </IconStyle>
+                    <LabelStyle>
+                        <color>00ffffff</color>
+                        <scale>0.0</scale>
+                    </LabelStyle>
+                    <LineStyle>
+                        <color>ffe600ff</color>
+                        <width>5.0</width>
+                    </LineStyle>
+                    <PolyStyle>
+                        <color>ffe600ff</color>
+                        <outline>1</outline>
+                    </PolyStyle>
+                </Style>
+                <MultiGeometry>
+                    <Point>
+                        <coordinates>79.71194530055894,30.53675907962981</coordinates>
+                    </Point>
+                    <Polygon>
+                        <outerBoundaryIs>
+                            <LinearRing>
+                                <tessellate>1</tessellate>
+                                <coordinates>79.71273930423024,30.536559427521492 79.71182773797995,30.536669779336062 79.71133137883562,30.5366648694901 79.71119066439279,30.536878332092527 79.71124486991252,30.536950486715217 79.71143758385621,30.536976266112905 79.71185247802296,30.53688487888968 79.71248829077777,30.53677180147671 79.71281919737372,30.536775071989048 79.71273930423024,30.536559427521492</coordinates>
+                            </LinearRing>
+                        </outerBoundaryIs>
+                    </Polygon>
+                </MultiGeometry>
+            </Placemark>
+            <Placemark id="UK_SLIM_2017.446">
+                <name>UK_SLIM_2017.446</name>
+                <description>&lt;h4&gt;UK_SLIM_2017&lt;/h4&gt;
+
+&lt;ul class="textattributes"&gt;
+  
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;SlideNo&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;UK/UT/53J02/2017/3&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;State&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Uttarakhand&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;District&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;UTTARKASHI&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Toposheet&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;53J02&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Latitude&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;30.5918&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Longitude&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;78.2277&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Length_m&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;100.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Width_m&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;41.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Height_m&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;12.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Area_Sqm&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;2890.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Activity&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Active&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Geomorph&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Structural Hill Highlly Dissected&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Lithology&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Metamorphic  Rocks&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;LULC&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Evergreen / Semi evergreen&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Triggering&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Rainfall&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Year&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;2017.0&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Basin&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Ganga Basin&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Sub_Basin&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;Above Ramganga Confluence&lt;/span&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;span class="atr-name"&gt;Source&lt;/span&gt;:&lt;/strong&gt; &lt;span class="atr-value"&gt;RESOURCESAT-2 LISS IV, 10m CARTODEM, RGNDW 50k, LULC 50k (2011-12) &amp; India-WRIS&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+                <LookAt>
+                    <longitude>79.41933406540977</longitude>
+                    <latitude>30.53138565155654</latitude>
+                    <altitude>132.725723633137</altitude>
+                    <heading>0.0</heading>
+                    <tilt>0.0</tilt>
+                    <range>107.24934638147283</range>
+                    <altitudeMode>clampToGround</altitudeMode>
+                </LookAt>
+                <Style>
+                    <IconStyle>
+                        <color>00ffffff</color>
+                        <scale>0.4</scale>
+                        <heading>0.0</heading>
+                        <Icon>
+                            <href>http://icons.opengeo.org/markers/icon-poly.1.png</href>
+                        </Icon>
+                    </IconStyle>
+                    <LabelStyle>
+                        <color>00ffffff</color>
+                        <scale>0.0</scale>
+                    </LabelStyle>
+                    <LineStyle>
+                        <color>ffe600ff</color>
+                        <width>5.0</width>
+                    </LineStyle>
+                    <PolyStyle>
+                        <color>ffe600ff</color>
+                        <outline>1</outline>
+                    </PolyStyle>
+                </Style>
+                <MultiGeometry>
+                    <Point>
+                        <coordinates>79.4193941046963,30.531332642261088</coordinates>
+                    </Point>
+                    <Polygon>
+                        <outerBoundaryIs>
+                            <LinearRing>
+                                <tessellate>1</tessellate>
+                                <coordinates>79.41908397424133,30.531009049612376 79.41927505997559,30.531469697580068 79.41942388952286,30.53181525030464 79.41957828491057,30.531817123744244 79.41958415879975,30.531454351304205 79.41956828540897,30.53107221793976 79.4194154370854,30.530974878096497 79.4192834085349,30.53095417889116 79.41908397424133,30.531009049612376</coordinates>
+                            </LinearRing>
+                        </outerBoundaryIs>
+                    </Polygon>
+                </MultiGeometry>
+            </Placemark>
+        </Folder>
+    </Document>
+</kml>

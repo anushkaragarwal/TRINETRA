@@ -1,16 +1,3 @@
-metric,value
-population_settlements,101.0
-total_population_2026_est,56794.0
-safe_sites_with_verified_coordinates,74.0
-geographic_safe_site_capacity,2727.0
-remaining_safe_site_capacity,0.0
-settlements_with_coordinates,95.0
-settlements_without_coordinates,6.0
-ai_source_site_pairs,7030.0
-unique_ai_ranked_sites,74.0
-allocated_population,2727.0
-unallocated_population,54067.0
-allocation_rate_percent,4.8
-fully_allocated_settlements,4.0
-partially_allocated_settlements,1.0
-unresolved_settlements,6.0
+version https://git-lfs.github.com/spec/v1
+oid sha256:57d905e2a19df64c8bdf1147b9764e0e485c9177735eabbfc095fdd084a692d0
+size 512
