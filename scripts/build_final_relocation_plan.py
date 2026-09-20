@@ -29,6 +29,7 @@ IMPORTANT
 from pathlib import Path
 import pickle
 import math
+from backend.services.settlement_risk import get_settlement_risk
 
 import numpy as np
 import pandas as pd
@@ -714,6 +715,65 @@ geographic_sources = sources[
     sources["has_coordinates"]
 ].copy()
 
+# ============================================================
+# DYNAMIC RISK PRIORITY FROM RISK INTELLIGENCE
+# ============================================================
+# Risk Intelligence owns the risk formula.
+# Relocation only consumes the latest risk_score.
+# No settlement names or fixed thresholds are hardcoded.
+
+risk_response = get_settlement_risk(limit=50)
+
+risk_rows = risk_response.get("settlements", [])
+
+risk_df = pd.DataFrame(risk_rows)
+
+if not risk_df.empty:
+    risk_df = risk_df[["id", "risk_score"]].copy()
+
+    risk_df["id"] = (
+        risk_df["id"]
+        .astype(str)
+        .str.strip()
+    )
+
+    risk_df["risk_score"] = pd.to_numeric(
+        risk_df["risk_score"],
+        errors="coerce"
+    )
+
+    geographic_sources["source_id"] = (
+        geographic_sources["source_id"]
+        .astype(str)
+        .str.strip()
+    )
+
+    geographic_sources = geographic_sources.merge(
+        risk_df,
+        left_on="source_id",
+        right_on="id",
+        how="left"
+    )
+
+    geographic_sources["risk_score"] = (
+        geographic_sources["risk_score"]
+        .fillna(-1)
+    )
+
+else:
+    geographic_sources["risk_score"] = -1
+
+print("\nDynamic Risk Priority")
+print("-" * 70)
+
+print(
+    geographic_sources[
+        ["source_name", "risk_score"]
+    ]
+    .sort_values("risk_score", ascending=False)
+    .head(10)
+    .to_string(index=False)
+)
 
 for _, source in geographic_sources.iterrows():
 
@@ -943,16 +1003,14 @@ allocated_by_source = {
 }
 
 
-# Process sources in descending population order.
-#
-# Larger settlements are handled first so that available
-# emergency capacity is not consumed entirely by small
-# settlements.
-source_order = geographic_sources.sort_values(
-    by="source_population",
-    ascending=False
-)
+# ---------------------------------------------------------
+# DYNAMIC RISK-BASED SOURCE PRIORITY
+# ---------------------------------------------------------
 
+source_order = geographic_sources.sort_values(
+    by=["risk_score", "source_population"],
+    ascending=[False, False]
+)
 
 for _, source in source_order.iterrows():
 

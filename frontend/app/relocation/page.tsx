@@ -266,13 +266,11 @@ export default function RelocationPage() {
                           <div>
                             <p className="text-[9px] uppercase tracking-wider text-red-400">SOURCE SETTLEMENT</p>
                             <h3 className="mt-2 text-xl font-semibold">
-  {selected.destination_site || "Unknown site"}
+  {selected.source_settlement || "Unknown settlement"}
 </h3>
+
 <p className="mt-1 text-sm text-cyan-300">
-  Village · {selected.destination_village || "Location unavailable"}
-</p>
-<p className="mt-1 text-xs text-slate-500">
-  Site ID · {selected.destination_site_id || "—"}
+  Settlement ID · {selected.source_settlement_id || "—"}
 </p>
                           </div>
                           <div className="text-right">
