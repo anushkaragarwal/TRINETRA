@@ -3,3 +3,7 @@ data/features/dem_landslide_integrated_features.csv filter=lfs diff=lfs merge=lf
 data/features/landslide_predictions.csv filter=lfs diff=lfs merge=lfs -text
 data/features/landslide_susceptibility.csv filter=lfs diff=lfs merge=lfs -text
 data/features/landslide_hazard_features.csv filter=lfs diff=lfs merge=lfs -text
+data/features/*.csv filter=lfs diff=lfs merge=lfs -text
+data/features/*.gpkg filter=lfs diff=lfs merge=lfs -text
+data/raw/dem/*.tif filter=lfs diff=lfs merge=lfs -text
+data/processed/dem/*.tif filter=lfs diff=lfs merge=lfs -text
