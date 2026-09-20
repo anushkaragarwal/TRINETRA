@@ -979,6 +979,111 @@ latestRainfall?.["Daily Departure Per"] !== null
 
             {/* EVENT / SATELLITE EVIDENCE */}
             <div className="mt-5 rounded-lg border border-[#1c3038] bg-[#0d1920] p-5">
+
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[9px] uppercase tracking-wider text-slate-600">
+                    Event / Post-event Evidence
+                  </p>
+
+                  <h3 className="mt-1 text-sm font-medium">
+                    Satellite Analysis Details
+                  </h3>
+
+                  <p className="mt-1 text-[10px] leading-4 text-slate-500">
+                    Supporting satellite evidence from the TRINETRA event analysis dataset.
+                    It is not presented as an independent flood confirmation.
+                  </p>
+                </div>
+
+                <div className="text-right">
+                  <p className="text-[9px] uppercase text-slate-600">
+                    Event
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-300">
+                    {eventEvidence?.event_time ? formatDate(eventEvidence.event_time) : "—"}
+                  </p>
+                </div>
+              </div>
+
+
+              {/* TWO SATELLITE ANALYSIS IMAGES */}
+              <div className="mt-5 grid grid-cols-2 gap-4">
+
+                {/* SENTINEL-2 */}
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <h4 className="text-xs font-medium text-slate-300">
+                      Sentinel-2 Optical Analysis
+                    </h4>
+
+                    <span className="text-[9px] text-slate-600">
+                      EVENT OUTPUT
+                    </span>
+                  </div>
+
+                  <div className="overflow-hidden rounded-md border border-[#1c3038] bg-[#101d20]">
+                    <img
+                      src="/satellite/lambagarh_sentinel2_optical.png"
+                      alt="Sentinel-2 Optical Evidence — Lambagarh Event"
+                      className="block h-auto w-full"
+                    />
+                  </div>
+                </div>
+
+
+                {/* SENTINEL-1 */}
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <h4 className="text-xs font-medium text-slate-300">
+                      Sentinel-1 SAR Analysis
+                    </h4>
+
+                    <span className="text-[9px] text-slate-600">
+                      EVENT OUTPUT
+                    </span>
+                  </div>
+
+                  <div className="overflow-hidden rounded-md border border-[#1c3038] bg-[#101d20]">
+                    <img
+                      src="/satellite/lambagarh_sentinel1_sar.png"
+                      alt="Sentinel-1 SAR Analysis — Lambagarh Event"
+                      className="block h-auto w-full"
+                    />
+                  </div>
+                </div>
+
+              </div>
+
+
+              {/* THIRD IMAGE — REPLACES EVIDENCE SUMMARY */}
+              <div className="mt-5">
+
+                <div className="mb-2 flex items-center justify-between">
+                  <h4 className="text-base font-medium text-slate-300">
+                    Satellite Evidence Result
+                  </h4>
+
+                  <span className="text-[9px] text-slate-600">
+                    EVIDENCE OUTPUT
+                  </span>
+                </div>
+
+                <div className="overflow-hidden rounded-md border border-[#1c3038] bg-[#101d20]">
+                  <img
+                    src="/satellite/lambagarh_satellite_evidence_result.png"
+                    alt="Satellite Evidence Result — Lambagarh Event"
+                    className="block h-auto w-full"
+                  />
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* EVENT / SATELLITE EVIDENCE */}
+            {/* <div className="mt-5 rounded-lg border border-[#1c3038] bg-[#0d1920] p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[9px] uppercase tracking-wider text-slate-600">
@@ -1081,7 +1186,7 @@ latestRainfall?.["Daily Departure Per"] !== null
                   <div className="col-span-2"><span className="text-slate-500">Interpretation:</span> <span className="text-slate-300">{eventEvidence?.system_interpretation || eventEvidence?.satellite_status || "Supporting evidence should be cross-checked with hydrology and terrain."}</span></div>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* SENTINEL TABLE */}
             <div className="mt-5 rounded-lg border border-[#1c3038] bg-[#0d1920]">
