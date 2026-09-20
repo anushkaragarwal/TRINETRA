@@ -170,6 +170,14 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [selectedZone, setSelectedZone] = useState<HazardZone | null>(null);
+  const [selectedSettlement, setSelectedSettlement] =
+  useState<SettlementRisk | null>(null);
+  useEffect(() => {
+  if (selectedSettlement) {
+    console.log("SELECTED SETTLEMENT:", selectedSettlement);
+  }
+}, [selectedSettlement]);
 
   const loadDashboard = async (manualRefresh = false) => {
     if (manualRefresh) {
@@ -240,7 +248,7 @@ export default function Page() {
       .sort(
         (a, b) => (b.hazard_score ?? 0) - (a.hazard_score ?? 0),
       )
-      .slice(0, 30);
+      .slice(0, 60);
   }, [hazardData]);
 
   const settlements = useMemo(() => {
@@ -672,19 +680,21 @@ export default function Page() {
 
                     return (
                       <div
-                        key={settlement.id || `${settlement.name}-${index}`}
-                        className="absolute z-20"
-                        style={position}
-                        title={`${settlement.name} · ${formatScore(
-                          settlement.risk_score,
-                        )} · ${riskText(settlement.risk_level)}`}
-                      >
+  key={settlement.id || `${settlement.name}-${index}`}
+  onClick={() => setSelectedSettlement(settlement)}
+  className="absolute z-[50] cursor-pointer pointer-events-auto"
+  style={position}
+  title={`${settlement.name} · ${formatScore(
+    settlement.risk_score,
+  )} · ${riskText(settlement.risk_level)}`}
+>
                         <div className="relative -translate-x-1/2 -translate-y-1/2">
                           <div
-                            className={`relative z-20 h-4 w-4 rounded-full border-2 border-white/80 ${riskDot(
-                              settlement.risk_level,
-                            )} shadow-[0_0_16px_rgba(248,113,113,0.55)]`}
-                          ></div>
+  onClick={() => setSelectedSettlement(settlement)}
+  className={`relative z-20 h-4 w-4 cursor-pointer rounded-full border-2 border-white/80 ${riskDot(
+    settlement.risk_level,
+  )} shadow-[0_0_16px_rgba(248,113,113,0.55)]`}
+></div>
 
                           <div
                             className="pointer-events-none absolute left-1/2 top-1/2 z-10 h-px w-5 bg-slate-500/70"
@@ -698,7 +708,7 @@ export default function Page() {
                           ></div>
 
                           <div
-                            className="absolute left-1/2 top-1/2 z-30 min-w-[86px] -translate-x-1/2 whitespace-nowrap rounded border border-[#31454c] bg-[#081016]/95 px-2.5 py-1.5 shadow-lg backdrop-blur-sm"
+                            className="pointer-events-none absolute left-1/2 top-1/2 z-30 min-w-[86px] -translate-x-1/2 whitespace-nowrap rounded border border-[#31454c] bg-[#081016]/95 px-2.5 py-1.5 shadow-lg backdrop-blur-sm"
                             style={settlementLabelStyle(
                               index,
                               settlement.latitude,
@@ -737,7 +747,8 @@ export default function Page() {
                       >
                         <div className="relative -translate-x-1/2 -translate-y-1/2">
                           <div
-                            className={`h-2.5 w-2.5 rounded-full border border-white/40 opacity-80 ${riskDot(
+                            onClick={() => setSelectedZone(zone)}
+                            className={`h-2.5 w-2.5 cursor-pointer rounded-full border border-white/40 opacity-80 ${riskDot(
                               zone.risk_level,
                             )} shadow-[0_0_12px_rgba(34,211,238,0.25)]`}
                           ></div>
@@ -790,8 +801,105 @@ export default function Page() {
                         : "NO ACTIVE ALERT"}
                   </span>
                 </div>
+                {selectedZone && (
+  <div className="border-b border-[#1c3038] p-4">
+    <div className="mb-3 flex items-center justify-between">
+      <span className="text-[10px] uppercase tracking-wider text-cyan-400">
+        Selected Hazard
+      </span>
+      <button
+        onClick={() => setSelectedZone(null)}
+        className="text-[10px] text-slate-500 hover:text-white"
+      >
+        CLEAR
+      </button>
+    </div>
+
+    <div className="space-y-2 text-xs">
+      <div className="flex justify-between">
+        <span className="text-slate-500">Type</span>
+        <span className="text-slate-200">
+          {sourceLabel(selectedZone.type)}
+        </span>
+      </div>
+
+      <div className="flex justify-between">
+        <span className="text-slate-500">Risk Level</span>
+        <span className="text-slate-200">
+          {riskText(selectedZone.risk_level)}
+        </span>
+      </div>
+
+      <div className="flex justify-between">
+        <span className="text-slate-500">Hazard Score</span>
+        <span className="text-cyan-300">
+          {formatScore(selectedZone.hazard_score)}
+        </span>
+      </div>
+
+      <div className="flex justify-between">
+        <span className="text-slate-500">Latitude</span>
+        <span className="text-slate-300">
+          {selectedZone.lat?.toFixed(5)}
+        </span>
+      </div>
+
+      <div className="flex justify-between">
+        <span className="text-slate-500">Longitude</span>
+        <span className="text-slate-300">
+          {selectedZone.lon?.toFixed(5)}
+        </span>
+      </div>
+    </div>
+  </div>
+)}
 
                 <div className="p-4">
+                  {selectedSettlement && (
+  <div className="border-b border-[#1c3038] p-4">
+    <div className="mb-3 flex items-center justify-between">
+      <span className="text-[10px] uppercase tracking-wider text-orange-400">
+        Selected Settlement
+      </span>
+      <button
+        onClick={() => setSelectedSettlement(null)}
+        className="text-[10px] text-slate-500 hover:text-white"
+      >
+        CLEAR
+      </button>
+    </div>
+
+    <div className="space-y-2 text-xs">
+      <div className="flex justify-between">
+        <span className="text-slate-500">Settlement</span>
+        <span className="text-slate-200">
+          {selectedSettlement.name || "—"}
+        </span>
+      </div>
+
+      <div className="flex justify-between">
+        <span className="text-slate-500">Risk Level</span>
+        <span className="text-orange-400">
+          {riskText(selectedSettlement.risk_level)}
+        </span>
+      </div>
+
+      <div className="flex justify-between">
+        <span className="text-slate-500">Risk Score</span>
+        <span className="text-cyan-300">
+          {formatScore(selectedSettlement.risk_score)}
+        </span>
+      </div>
+
+      <div className="flex justify-between">
+        <span className="text-slate-500">Population</span>
+        <span className="text-slate-300">
+          {selectedSettlement.population ?? "—"}
+        </span>
+      </div>
+    </div>
+  </div>
+)}
                   <div className="rounded-md border border-[#263941] bg-[#0a151b] p-4">
                     <div className="flex items-center gap-2">
                       <span
@@ -1025,5 +1133,3 @@ export default function Page() {
     </main>
   );
 }
-
-

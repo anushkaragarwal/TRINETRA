@@ -8,7 +8,8 @@ type Relocation = {
   source_population_2026_est?: number;
   destination_site_id?: string;
   destination_site?: string;
-  allocated_people?: number;
+destination_village?: string;
+allocated_people?: number;
   ai_score?: number;
   ai_rank?: number;
   distance_km?: number;
@@ -264,8 +265,15 @@ export default function RelocationPage() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-[9px] uppercase tracking-wider text-red-400">SOURCE SETTLEMENT</p>
-                            <h3 className="mt-2 text-xl font-semibold">{selected.source_settlement || "Unknown settlement"}</h3>
-                            <p className="mt-1 text-xs text-slate-500">Population estimate · {fmt(selected.source_population_2026_est)}</p>
+                            <h3 className="mt-2 text-xl font-semibold">
+  {selected.destination_site || "Unknown site"}
+</h3>
+<p className="mt-1 text-sm text-cyan-300">
+  Village · {selected.destination_village || "Location unavailable"}
+</p>
+<p className="mt-1 text-xs text-slate-500">
+  Site ID · {selected.destination_site_id || "—"}
+</p>
                           </div>
                           <div className="text-right">
                             <p className={`text-3xl font-semibold ${scoreTone(num(selected.ai_score))}`}>{fmt(selected.ai_score, 1)}</p>
@@ -375,7 +383,12 @@ export default function RelocationPage() {
                       <tr key={`${plan.source_settlement_id}-${plan.destination_site_id}-${index}`} onClick={() => setSelectedIndex(index)} className={`cursor-pointer hover:bg-white/[0.02] ${index === selectedIndex ? "bg-cyan-400/[0.03]" : ""}`}>
                         <td className="px-4 py-3 text-xs font-medium text-cyan-300">#{fmt(plan.ai_rank || index + 1)}</td>
                         <td className="px-4 py-3 text-xs text-slate-300">{plan.source_settlement || "—"}</td>
-                        <td className="px-4 py-3 text-xs text-slate-300">{plan.destination_site || "—"}</td>
+                        <td className="px-4 py-3 text-xs text-slate-300">
+  <div>{plan.destination_site || "—"}</div>
+  <div className="mt-1 text-[10px] text-cyan-300">
+    {plan.destination_village || "Location unavailable"}
+  </div>
+</td>
                         <td className="px-4 py-3 text-xs text-slate-400">{fmt(plan.allocated_people)}</td>
                         <td className="px-4 py-3 text-xs text-slate-400">{fmt(plan.distance_km, 2)} km</td>
                         <td className={`px-4 py-3 text-xs ${scoreTone(num(plan.ai_score))}`}>{fmt(plan.ai_score, 1)}</td>

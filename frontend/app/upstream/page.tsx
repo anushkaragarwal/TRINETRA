@@ -61,7 +61,18 @@ type SatelliteProduct = {
   PublicationDate?: string;
   GeoFootprint?: unknown;
 };
-
+type TrinetraResponse = {
+  hazard_score?: number;
+  risk_level?: string;
+  components?: {
+    river_score?: number;
+    rainfall_score?: number;
+    landslide_score?: number;
+    satellite_score?: number;
+    terrain_score?: number;
+    satellite_products?: number;
+  };
+};
 type HazardsResponse = {
   status?: string;
   river?: RiverRecord[];
@@ -96,8 +107,8 @@ const DEFAULT_EVENT_EVIDENCE: EventEvidence = {
   latitude: 30.66472222,
   longitude: 79.5175,
   hydrological_risk_score: 95,
-  terrain_hazard_score: 52.415,
-  trinetra_hazard_score: 82.2245,
+  terrain_hazard_score: 75.25,
+  trinetra_hazard_score: 56.4455,
   satellite_evidence_score: 8.67,
   satellite_evidence_class: "INCONCLUSIVE_SATELLITE_EVIDENCE",
   satellite_status: "INCONCLUSIVE_NO_WIDESPREAD_INUNDATION",
@@ -181,21 +192,25 @@ function maxScore(records: { score?: number | null }[]) {
 
 export default function UpstreamPage() {
   const [data, setData] = useState<HazardsResponse | null>(null);
+  const [trinetraData, setTrinetraData] =
+  useState<TrinetraResponse | null>(null);
   const [eventEvidence, setEventEvidence] = useState<EventEvidence | null>(DEFAULT_EVENT_EVIDENCE);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
-  const [layer, setLayer] = useState<"SAR" | "HYDRO">("SAR");
+  const [layer, setLayer] = useState<"SAR" | "HYDRO">("HYDRO");
 
   const loadData = async (manual = false) => {
     setError("");
     manual ? setRefreshing(true) : setLoading(true);
 
     try {
-      const [hazardsResponse, evidenceResponse] = await Promise.all([
-        fetch(`${API_BASE}/api/hazards`, { cache: "no-store" }),
-        fetch(`${API_BASE}/api/event-evidence`, { cache: "no-store" }),
-      ]);
+      const [hazardsResponse, evidenceResponse, trinetraResponse] =
+  await Promise.all([
+    fetch(`${API_BASE}/api/hazards`, { cache: "no-store" }),
+    fetch(`${API_BASE}/api/event-evidence`, { cache: "no-store" }),
+    fetch(`${API_BASE}/api/trinetra`, { cache: "no-store" }),
+  ]);
 
       if (!hazardsResponse.ok) {
         throw new Error(`Hazards API returned ${hazardsResponse.status}`);
@@ -203,6 +218,11 @@ export default function UpstreamPage() {
 
       const result = (await hazardsResponse.json()) as HazardsResponse;
       setData(result);
+      if (trinetraResponse.ok) {
+  setTrinetraData(
+    (await trinetraResponse.json()) as TrinetraResponse,
+  );
+}
 
       if (evidenceResponse.ok) {
         const evidence = (await evidenceResponse.json()) as {
@@ -232,9 +252,18 @@ export default function UpstreamPage() {
   const terrain = data?.terrain ?? [];
   const satellites = data?.satellite ?? [];
 
-  const latestRiver = rivers[0];
-  const latestRainfall = rainfall[0];
-  const latestTerrain = terrain[0];
+  const latestRiver = rivers[0] ?? {
+  Station: eventEvidence?.station,
+  hybrid_hazard_score: eventEvidence?.hydrological_risk_score,
+  hybrid_risk_category:
+    (eventEvidence?.hydrological_risk_score ?? 0) >= 90
+      ? "CRITICAL"
+      : "Available",
+};
+
+const latestRainfall = rainfall[0];
+
+const latestTerrain = terrain[0];
 
   const riverScore = maxScore(
     rivers.map((item) => ({ score: item.hybrid_hazard_score })),
@@ -242,35 +271,53 @@ export default function UpstreamPage() {
   const rainfallScore = maxScore(
     rainfall.map((item) => ({ score: item.hybrid_hazard_score })),
   );
+
   const terrainScore = maxScore(
     terrain.map((item) => ({ score: item.terrain_hazard_score })),
   );
+  const displayRiverScore =
+  trinetraData?.components?.river_score ?? riverScore;
+
+const displayRainfallScore =
+  trinetraData?.components?.rainfall_score ?? rainfallScore;
+
+const displayTerrainScore =
+  trinetraData?.components?.terrain_score ?? terrainScore;
 
   const activeSignals = useMemo(() => {
-    const riverSignals = rivers.filter(
-      (item) =>
-        item.hybrid_risk_category === "HIGH" ||
-        item.hybrid_risk_category === "CRITICAL" ||
-        item.anomaly_label === "ANOMALY",
-    ).length;
+  let count = 0;
 
-    const rainfallSignals = rainfall.filter(
-      (item) =>
-        item.hazard_category === "HIGH" ||
-        item.hazard_category === "CRITICAL" ||
-        item.anomaly_label === "ANOMALY",
-    ).length;
+  if ((displayRiverScore ?? 0) >= 75) count += 1;
+  if ((displayRainfallScore ?? 0) >= 75) count += 1;
+  if ((displayTerrainScore ?? 0) >= 75) count += 1;
 
-    return riverSignals + rainfallSignals;
-  }, [rivers, rainfall]);
+  return count;
+}, [displayRiverScore, displayRainfallScore, displayTerrainScore]);
 
   const riverMapPoints = rivers
-    .filter(
-      (item) =>
-        typeof item.Latitude === "number" &&
-        typeof item.Longitude === "number",
-    )
-    .slice(0, 20);
+  .filter(
+    (item) =>
+      typeof item.Latitude === "number" &&
+      typeof item.Longitude === "number",
+  )
+  .slice(0, 20);
+
+if (
+  riverMapPoints.length === 0 &&
+  typeof eventEvidence?.latitude === "number" &&
+  typeof eventEvidence?.longitude === "number"
+) {
+  riverMapPoints.push({
+    Station: eventEvidence.station,
+    Latitude: eventEvidence.latitude,
+    Longitude: eventEvidence.longitude,
+    hybrid_hazard_score: eventEvidence.hydrological_risk_score,
+    hybrid_risk_category:
+      (eventEvidence.hydrological_risk_score ?? 0) >= 90
+        ? "CRITICAL"
+        : "Available",
+  });
+}
 
   const terrainMapPoints = terrain
     .filter(
@@ -417,7 +464,7 @@ export default function UpstreamPage() {
               <div className="text-right">
                 <p className="text-[10px] text-slate-500">LAST DATA LOAD</p>
                 <p className="text-xs text-slate-300">
-01 JAN 2026, 03:00
+10 Sept 2026, 03:00
                 </p>
               </div>
 
@@ -483,7 +530,7 @@ export default function UpstreamPage() {
                 </p>
                 <div className="mt-2 flex items-end gap-2">
                   <p className="text-3xl font-semibold">
-                    {loading ? "--" : scoreOf(riverScore)}
+                    {loading ? "--" : scoreOf(displayRiverScore)}
                   </p>
                   <span className="mb-1 text-xs text-slate-500">/ 100</span>
                 </div>
@@ -492,7 +539,8 @@ export default function UpstreamPage() {
                     latestRiver?.hybrid_risk_category,
                   )}`}
                 >
-                  {latestRiver?.hybrid_risk_category || "No data"}
+                  {latestRiver?.hybrid_risk_category ||
+  ((displayRiverScore ?? 0) >= 90 ? "CRITICAL" : "Available")}
                 </p>
               </div>
 
@@ -502,7 +550,7 @@ export default function UpstreamPage() {
                 </p>
                 <div className="mt-2 flex items-end gap-2">
                   <p className="text-3xl font-semibold text-yellow-400">
-                    {loading ? "--" : scoreOf(terrainScore)}
+                    {loading ? "--" : scoreOf(displayTerrainScore)}
                   </p>
                   <span className="mb-1 text-xs text-slate-500">/ 100</span>
                 </div>
@@ -701,7 +749,7 @@ export default function UpstreamPage() {
                   {[
                     {
                       name: "River / Hydrology",
-                      score: riverScore,
+                      score: displayRiverScore,
                       level:
                         latestRiver?.hybrid_risk_category ||
                         latestRiver?.risk_category,
@@ -710,7 +758,7 @@ export default function UpstreamPage() {
                     },
                     {
                       name: "Rainfall",
-                      score: rainfallScore,
+                      score: displayRainfallScore,
                       level:
                         latestRainfall?.hazard_category ||
                         latestRainfall?.risk_category,
@@ -719,7 +767,7 @@ export default function UpstreamPage() {
                     },
                     {
                       name: "Terrain",
-                      score: terrainScore,
+                      score: displayTerrainScore,
                       level: latestTerrain?.terrain_hazard_level,
                       description: "DEM-derived susceptibility",
                     },
@@ -782,7 +830,7 @@ export default function UpstreamPage() {
               </div>
             </div>
 
-            {/* HYDROLOGY DETAIL */}
+            {/* HYDROLOGY DETAIL
             <div className="mt-5 grid grid-cols-2 gap-5">
               <div className="rounded-lg border border-[#1c3038] bg-[#0d1920] p-5">
                 <div className="flex items-center justify-between">
@@ -866,7 +914,7 @@ export default function UpstreamPage() {
                       Latest Rainfall Signal
                     </h3>
                     <p className="mt-1 text-[10px] text-slate-500">
-                      Returned processed rainfall observation
+                      Event-date rainfall unavailable; latest pipeline score shown above
                     </p>
                   </div>
 
@@ -888,7 +936,7 @@ export default function UpstreamPage() {
                       District
                     </p>
                     <p className="mt-1 text-xs text-slate-200">
-                      {latestRainfall?.District || "—"}
+                      {latestRainfall?.District || "Chamoli"}
                     </p>
                   </div>
 
@@ -898,8 +946,8 @@ export default function UpstreamPage() {
                     </p>
                     <p className="mt-1 text-xs text-slate-200">
                       {typeof latestRainfall?.["Daily Actual"] === "number"
-                        ? `${latestRainfall["Daily Actual"].toFixed(1)} mm`
-                        : "—"}
+  ? `${latestRainfall["Daily Actual"].toFixed(1)} mm`
+  : "No event-date observation"}
                     </p>
                   </div>
 
@@ -909,8 +957,8 @@ export default function UpstreamPage() {
                     </p>
                     <p className="mt-1 text-xs text-slate-200">
                       {typeof latestRainfall?.["Daily Normal"] === "number"
-                        ? `${latestRainfall["Daily Normal"].toFixed(1)} mm`
-                        : "—"}
+  ? `${latestRainfall["Daily Normal"].toFixed(1)} mm`
+  : "Not available"}
                     </p>
                   </div>
 
@@ -920,14 +968,14 @@ export default function UpstreamPage() {
                     </p>
                     <p className="mt-1 text-xs text-slate-200">
                       {latestRainfall?.["Daily Departure Per"] !== undefined &&
-                      latestRainfall?.["Daily Departure Per"] !== null
-                        ? `${latestRainfall["Daily Departure Per"]}%`
-                        : "—"}
+latestRainfall?.["Daily Departure Per"] !== null
+  ? `${latestRainfall["Daily Departure Per"]}%`
+  : "Not available"}
                     </p>
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* EVENT / SATELLITE EVIDENCE */}
             <div className="mt-5 rounded-lg border border-[#1c3038] bg-[#0d1920] p-5">

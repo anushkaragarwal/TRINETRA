@@ -603,6 +603,15 @@ if site_district_col:
 else:
     sites["site_district"] = ""
 
+if "village_name" in safe_sites.columns:
+    sites["site_village"] = (
+        safe_sites["village_name"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+    )
+else:
+    sites["site_village"] = ""
 
 # Remove duplicate site IDs.
 sites = (
@@ -782,9 +791,10 @@ for _, source in geographic_sources.iterrows():
                 "source_name": source_name,
                 "site_id": site_id,
                 "site_name": site["site_name"],
-                "site_capacity": int(
-                    site["site_capacity"]
-                ),
+"site_village": site["site_village"],
+"site_capacity": int(
+    site["site_capacity"]
+),
                 "site_safe_score": float(
                     site["site_safe_score"]
                 ),
@@ -1020,8 +1030,9 @@ for _, source in source_order.iterrows():
 
                 "destination_site_id": site_id,
                 "destination_site": candidate["site_name"],
+"destination_village": candidate["site_village"],
 
-                "allocated_people": int(allocation),
+"allocated_people": int(allocation),
 
                 "ai_score": round(
                     float(candidate["ai_score"]),
@@ -1152,6 +1163,7 @@ for _, source in sources.iterrows():
 
                 "destination_site_id": "",
                 "destination_site": "",
+                "destination_village": "",
 
                 "allocated_people": 0,
 

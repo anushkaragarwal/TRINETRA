@@ -16,32 +16,65 @@ def get_hazard_zones():
     # -------------------------
     # RIVER
     # -------------------------
+        # -------------------------
+    # RIVER
+    # -------------------------
     if RIVER_FILE.exists():
         df = pd.read_csv(RIVER_FILE)
 
-        if "lat" in df.columns and "lon" in df.columns:
-            score_col = "hybrid_hazard_score"
+        if (
+            "Latitude" in df.columns
+            and "Longitude" in df.columns
+            and "hybrid_hazard_score" in df.columns
+        ):
+            df["Latitude"] = pd.to_numeric(
+                df["Latitude"],
+                errors="coerce"
+            )
 
-            if score_col in df.columns:
-                for _, row in df.nlargest(20, score_col).iterrows():
-                    score = float(row[score_col])
+            df["Longitude"] = pd.to_numeric(
+                df["Longitude"],
+                errors="coerce"
+            )
 
-                    if score >= 75:
-                        level = "CRITICAL"
-                    elif score >= 50:
-                        level = "HIGH"
-                    elif score >= 25:
-                        level = "MODERATE"
-                    else:
-                        level = "LOW"
+            df["hybrid_hazard_score"] = pd.to_numeric(
+                df["hybrid_hazard_score"],
+                errors="coerce"
+            )
 
-                    zones.append({
-                        "type": "river",
-                        "lat": float(row["lat"]),
-                        "lon": float(row["lon"]),
-                        "hazard_score": round(score, 2),
-                        "risk_level": level
-                    })
+            df = df.dropna(
+                subset=[
+                    "Latitude",
+                    "Longitude",
+                    "hybrid_hazard_score"
+                ]
+            )
+
+            for _, row in df.nlargest(
+                20,
+                "hybrid_hazard_score"
+            ).iterrows():
+
+                score = float(
+                    row["hybrid_hazard_score"]
+                )
+
+                if score >= 75:
+                    level = "CRITICAL"
+                elif score >= 50:
+                    level = "HIGH"
+                elif score >= 25:
+                    level = "MODERATE"
+                else:
+                    level = "LOW"
+
+                zones.append({
+                    "type": "river",
+                    "lat": float(row["Latitude"]),
+                    "lon": float(row["Longitude"]),
+                    "hazard_score": round(score, 2),
+                    "risk_level": level
+                })
 
     # -------------------------
     # RAINFALL

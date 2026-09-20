@@ -987,7 +987,7 @@ export default function RiskPage() {
               </div>
             </div>
 
-            {/* DATA COVERAGE */}
+            {/* DATA COVERAGE
             <div className="mt-5 grid grid-cols-3 gap-4">
               <div className="rounded-lg border border-[#1c3038] bg-[#0d1920] p-4">
                 <p className="text-[9px] uppercase tracking-wider text-slate-600">
@@ -1033,7 +1033,7 @@ export default function RiskPage() {
               <p className="text-[9px] text-slate-600">
                 Backend risk assessment · {totalHazardRecords} hazard records
               </p>
-            </div>
+            </div> */}
           </div>
         </section>
       </div>

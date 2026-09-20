@@ -479,7 +479,7 @@ export default function SafeSitesPage() {
             </div>
 
             {/* MAP + SELECTED SITE */}
-            <div className="mt-5 grid grid-cols-[1fr_390px] gap-5">
+            <div className="mt-5 grid grid-cols-[1fr_390px] items-start gap-5">
               <div className="overflow-hidden rounded-lg border border-[#1c3038] bg-[#0b171d]">
                 <div className="flex items-center justify-between border-b border-[#1c3038] px-4 py-3">
                   <div>
@@ -496,7 +496,7 @@ export default function SafeSitesPage() {
                   </span>
                 </div>
 
-                <div className="relative h-[390px] overflow-hidden bg-[#0a191f]">
+                <div className="relative h-[680px] overflow-hidden bg-[#0a191f]">
                   <div
                     className="absolute inset-0 opacity-20"
                     style={{

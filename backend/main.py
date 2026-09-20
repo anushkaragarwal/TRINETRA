@@ -1,21 +1,53 @@
 import os
+import math
+import pandas as pd
+
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
-from backend.services.river import get_latest_river, refresh_river
-from backend.services.rainfall import get_latest_rainfall, refresh_rainfall
-from backend.services.satellite import get_latest_satellite, refresh_satellite
-from backend.services.terrain import get_latest_terrain, refresh_terrain
-from backend.services.hazard_zones import get_hazard_zones
-from backend.services.settlement_risk import get_settlement_risk
+
+from backend.services.river import (
+    get_latest_river,
+    refresh_river,
+)
+
+from backend.services.rainfall import (
+    get_latest_rainfall,
+    refresh_rainfall,
+)
+
+from backend.services.satellite import (
+    get_latest_satellite,
+    refresh_satellite,
+)
+
+from backend.services.terrain import (
+    get_latest_terrain,
+    refresh_terrain,
+)
+
+from backend.services.hazard_zones import (
+    get_hazard_zones,
+)
+
+from backend.services.settlement_risk import (
+    get_settlement_risk,
+)
+
 from backend.services.relocation import (
     refresh_relocation_data,
     get_relocation_summary,
     get_top_relocations,
     get_relocation_decisions,
-    get_safe_sites
+    get_safe_sites,
 )
+
+
+# ============================================================
+# CONFIG
+# ============================================================
+
 load_dotenv()
 
 app = FastAPI(title="TRINETRA API")
@@ -28,6 +60,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# ============================================================
+# MONGODB
+# ============================================================
+
 MONGODB_URI = os.getenv("MONGODB_URI")
 MONGODB_DB = os.getenv("MONGODB_DB", "trinetra")
 
@@ -35,54 +72,131 @@ client = MongoClient(MONGODB_URI)
 db = client[MONGODB_DB]
 
 
+# ============================================================
+# HELPERS
+# ============================================================
+
+FINAL_EVENT_OUTPUT = (
+    "data/outputs/trinetra_event_dashboard_data.csv"
+)
+
+
+def clean(data):
+    """
+    Recursively remove NaN / infinite values so FastAPI
+    can safely serialize the response.
+    """
+
+    if isinstance(data, list):
+        return [clean(x) for x in data]
+
+    if isinstance(data, dict):
+        return {
+            k: clean(v)
+            for k, v in data.items()
+        }
+
+    if isinstance(data, float):
+        if not math.isfinite(data):
+            return None
+
+    return data
+
+
+def safe_float(value, default=0.0):
+    """
+    Safely convert a value to float.
+    """
+
+    try:
+        if pd.isna(value):
+            return default
+
+        return float(value)
+
+    except (TypeError, ValueError):
+        return default
+
+
+def safe_bool(value, default=False):
+    """
+    Safely convert CSV values to boolean.
+    """
+
+    if isinstance(value, bool):
+        return value
+
+    if pd.isna(value):
+        return default
+
+    value = str(value).strip().lower()
+
+    if value in {"true", "1", "yes", "y"}:
+        return True
+
+    if value in {"false", "0", "no", "n"}:
+        return False
+
+    return default
+
+
+# ============================================================
+# HEALTH
+# ============================================================
+
 @app.get("/health")
 def health():
+
     try:
         client.admin.command("ping")
+
         return {
             "status": "ok",
-            "mongodb": "connected"
+            "mongodb": "connected",
         }
+
     except Exception as e:
+
         return {
             "status": "error",
-            "mongodb": str(e)
+            "mongodb": str(e),
         }
+
+
+# ============================================================
+# API STATUS
+# ============================================================
+
 @app.get("/api/status")
 def api_status():
+
     return {
         "project": "TRINETRA",
         "backend": "online",
-        "mongodb": "connected"
+        "mongodb": "connected",
     }
-from backend.services.river import get_latest_river
-from backend.services.rainfall import get_latest_rainfall
-from backend.services.satellite import get_latest_satellite
 
+
+# ============================================================
+# HAZARDS
+# ============================================================
 
 @app.get("/api/hazards")
 def get_hazards():
-    import math
-
-    def clean(data):
-        if isinstance(data, list):
-            return [clean(x) for x in data]
-
-        if isinstance(data, dict):
-            return {k: clean(v) for k, v in data.items()}
-
-        if isinstance(data, float) and not math.isfinite(data):
-            return None
-
-        return data
 
     return clean({
         "status": "ok",
         "river": get_latest_river(),
         "rainfall": get_latest_rainfall(),
         "satellite": get_latest_satellite(),
-        "terrain": get_latest_terrain()
+        "terrain": get_latest_terrain(),
     })
+
+
+# ============================================================
+# REFRESH ALL
+# ============================================================
+
 @app.post("/api/refresh")
 def refresh_all():
 
@@ -91,149 +205,284 @@ def refresh_all():
         "river": refresh_river(),
         "rainfall": refresh_rainfall(),
         "satellite": refresh_satellite(),
-        "terrain": refresh_terrain()
+        "terrain": refresh_terrain(),
     }
+
+
+# ============================================================
+# FINAL TRINETRA MVP RESULT
+# ============================================================
+
 @app.get("/api/trinetra")
 def trinetra_result():
 
-    import math
+    """
+    Return the final frozen TRINETRA MVP event.
 
-    river = get_latest_river()
-    rainfall = get_latest_rainfall()
-    satellite = get_latest_satellite()
-    terrain = get_latest_terrain()
+    IMPORTANT:
+    This endpoint intentionally reads the already-generated
+    final event output instead of recalculating hazard scores.
 
-    def clean(data):
-        if isinstance(data, list):
-            return [clean(x) for x in data]
+    The final event pipeline already applies:
+        River       = 40%
+        Rainfall    = 30%
+        Landslide   = 30%
 
-        if isinstance(data, dict):
-            return {k: clean(v) for k, v in data.items()}
+    This keeps the API and dashboard synchronized with the
+    final MVP output.
+    """
 
-        if isinstance(data, float) and not math.isfinite(data):
-            return None
+    try:
 
-        return data
+        if not os.path.exists(FINAL_EVENT_OUTPUT):
 
-    # -----------------------------
-    # RIVER SCORE
-    # -----------------------------
-    river_score = 0
+            return {
+                "project": "TRINETRA",
+                "status": "error",
+                "message": (
+                    "Final TRINETRA event output not found: "
+                    f"{FINAL_EVENT_OUTPUT}"
+                ),
+            }
 
-    if river:
-        river_scores = [
-            x.get("hybrid_hazard_score", 0)
-            for x in river
-            if isinstance(x.get("hybrid_hazard_score"), (int, float))
-        ]
+        df = pd.read_csv(FINAL_EVENT_OUTPUT)
 
-        if river_scores:
-            river_score = max(river_scores)
+        if df.empty:
 
-    # -----------------------------
-    # RAINFALL SCORE
-    # -----------------------------
-    rainfall_score = 0
+            return {
+                "project": "TRINETRA",
+                "status": "error",
+                "message": "Final TRINETRA event output is empty",
+            }
 
-    if rainfall:
-        rainfall_scores = [
-            x.get("hybrid_hazard_score", 0)
-            for x in rainfall
-            if isinstance(x.get("hybrid_hazard_score"), (int, float))
-        ]
+        row = df.iloc[0]
 
-        if rainfall_scores:
-            rainfall_score = max(rainfall_scores)
+        # ----------------------------------------------------
+        # FINAL MVP COMPONENT SCORES
+        # ----------------------------------------------------
 
-    # -----------------------------
-    # TERRAIN SCORE
-    # -----------------------------
-    terrain_score = 0
+        river_score = safe_float(
+            row.get("river_risk_score_0_100", 0)
+        )
 
-    if terrain:
-        terrain_scores = [
-            x.get("terrain_hazard_score", 0)
-            for x in terrain
-            if isinstance(x.get("terrain_hazard_score"), (int, float))
-        ]
+        rainfall_score = safe_float(
+            row.get("rainfall_risk_score_0_100", 0)
+        )
 
-        if terrain_scores:
-            terrain_score = max(terrain_scores)
+        landslide_score = safe_float(
+    row.get("landslide_hazard_score_0_100", 0)
+)
+        final_score = safe_float(
+            row.get("trinetra_hazard_score_0_100", 0)
+        )
 
-    # -----------------------------
-    # HYDRO + TERRAIN
-    # Existing project weighting:
-    # Hydro = 70%
-    # Terrain = 30%
-    # -----------------------------
+        satellite_score = safe_float(
+    row.get("satellite_evidence_score_0_100", 0)
+)
 
-    hydro_score = max(river_score, rainfall_score)
+        risk_level = str(
+            row.get(
+                "trinetra_hazard_level",
+                "UNKNOWN",
+            )
+        )
 
-    final_score = (
-        0.70 * hydro_score
-        + 0.30 * terrain_score
-    )
+        # ----------------------------------------------------
+        # EVENT INFORMATION
+        # ----------------------------------------------------
 
-    if final_score >= 75:
-        risk_level = "CRITICAL"
-    elif final_score >= 50:
-        risk_level = "HIGH"
-    elif final_score >= 25:
-        risk_level = "MODERATE"
-    else:
-        risk_level = "LOW"
+        event_id = str(
+            row.get("event_id", "")
+        )
 
-    alert = risk_level in ["HIGH", "CRITICAL"]
+        event_date = str(
+            row.get("event_date", "")
+        )
 
-    return clean({
-        "project": "TRINETRA",
+        rainfall_available = safe_bool(
+            row.get("rainfall_available", False)
+        )
 
-        "status": "ok",
+        rainfall_start = str(
+            row.get("rainfall_coverage_start", "")
+        )
 
-        "hazard_score": round(final_score, 2),
+        rainfall_end = str(
+            row.get("rainfall_coverage_end", "")
+        )
 
-        "risk_level": risk_level,
+        # ----------------------------------------------------
+        # RESPONSE
+        # ----------------------------------------------------
 
-        "alert": alert,
+        response = {
 
-        "components": {
-            "river_score": round(river_score, 2),
-            "rainfall_score": round(rainfall_score, 2),
-            "terrain_score": round(terrain_score, 2),
-            "satellite_products": len(satellite)
-        },
+            "project": "TRINETRA",
 
-        "data_sources": {
-            "river": "CWC",
-            "rainfall": "existing rainfall pipeline",
-            "satellite": "Copernicus Sentinel-1",
-            "terrain": "DEM"
+            "status": "ok",
+
+            "hazard_score": round(
+                final_score,
+                2,
+            ),
+
+            "risk_level": risk_level,
+
+            "alert": risk_level in {
+                "HIGH",
+                "CRITICAL",
+            },
+
+            "components": {
+
+    "river_score": round(
+        river_score,
+        2,
+    ),
+
+    "rainfall_score": round(
+        rainfall_score,
+        2,
+    ),
+
+    "landslide_score": round(
+        landslide_score,
+        2,
+    ),
+
+    "satellite_score": round(
+        satellite_score,
+        2,
+    ),
+
+    # Backward-compatible fields used by the existing dashboard
+    "terrain_score": round(
+        max(
+            [
+                safe_float(x.get("terrain_hazard_score", 0))
+                for x in get_latest_terrain()
+                if isinstance(x, dict)
+            ],
+            default=0,
+        ),
+        2,
+    ),
+
+    "satellite_products": len(
+        get_latest_satellite()
+    ),
+},
+
+            "event": {
+
+                "event_id": event_id,
+
+                "event_date": event_date,
+
+                "rainfall_available":
+                    rainfall_available,
+
+                "rainfall_coverage_start":
+                    rainfall_start,
+
+                "rainfall_coverage_end":
+                    rainfall_end,
+            },
+
+            "data_sources": {
+
+                "river": "CWC",
+
+                "rainfall":
+                    "existing rainfall pipeline",
+
+                "landslide":
+                    "DEM + landslide ML pipeline",
+
+                "satellite":
+                    "Copernicus Sentinel-1/Sentinel-2",
+
+                "terrain":
+                    "DEM",
+            },
         }
-    })
+
+        return clean(response)
+
+    except Exception as e:
+
+        return {
+            "project": "TRINETRA",
+            "status": "error",
+            "message": str(e),
+        }
+
+
+# ============================================================
+# HAZARD ZONES
+# ============================================================
+
 @app.get("/api/hazard-zones")
 def hazard_zones():
+
     return get_hazard_zones()
+
+
+# ============================================================
+# RELOCATION REFRESH
+# ============================================================
 
 @app.post("/api/relocation/refresh")
 def refresh_relocation():
+
     return refresh_relocation_data()
 
 
+# ============================================================
+# SAFE SITES
+# ============================================================
 
 @app.get("/api/safe-sites")
 def safe_sites(limit: int = 2000):
+
     return get_safe_sites(limit)
+
+
+# ============================================================
+# RELOCATION SUMMARY
+# ============================================================
 
 @app.get("/api/relocation/summary")
 def relocation_summary():
+
     return get_relocation_summary()
+
+
+# ============================================================
+# TOP RELOCATIONS
+# ============================================================
+
 @app.get("/api/relocation/top")
 def top_relocations(limit: int = 20):
+
     return get_top_relocations(limit)
+
+
+# ============================================================
+# RELOCATION DECISIONS
+# ============================================================
+
 @app.get("/api/relocation/decisions")
 def relocation_decisions(limit: int = 20):
+
     return get_relocation_decisions(limit)
+
+
+# ============================================================
+# SETTLEMENT RISK
+# ============================================================
 
 @app.get("/api/risk/settlements")
 def risk_settlements(limit: int = 8):
+
     return get_settlement_risk(limit)
