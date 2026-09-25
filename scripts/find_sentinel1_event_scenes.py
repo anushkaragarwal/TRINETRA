@@ -11,30 +11,40 @@ INPUT_PATH = (
     / "sentinel1_metadata.csv"
 )
 
-# ---------------------------------------------------------
-# SELECTED TRINETRA RIVER EVENT
-# ---------------------------------------------------------
-# CWC river event time is assumed to be Indian Standard Time.
-# Sentinel-1 timestamps are in UTC.
+
+# =========================================================
+# TRINETRA SENTINEL-1 ANALYSIS WINDOW
+# =========================================================
+# Required satellite analysis period:
 #
-# 17 July 2026, 18:30 IST
-# = 17 July 2026, 13:00 UTC
-# ---------------------------------------------------------
-EVENT_TIME_IST = pd.Timestamp(
-    "2026-07-17 18:30:00",
+# 19 August 2026 → 19 September 2026
+#
+# Metadata timestamps are stored in UTC.
+# Window is defined in IST and converted to UTC.
+# =========================================================
+
+WINDOW_START_IST = pd.Timestamp(
+    "2026-08-19 00:00:00",
     tz="Asia/Kolkata",
 )
 
-EVENT_TIME_UTC = EVENT_TIME_IST.tz_convert(
-    "UTC"
+WINDOW_END_IST = pd.Timestamp(
+    "2026-09-19 23:59:59",
+    tz="Asia/Kolkata",
 )
 
-BEFORE_DAYS = 14
-AFTER_DAYS = 14
+WINDOW_START_UTC = WINDOW_START_IST.tz_convert("UTC")
+WINDOW_END_UTC = WINDOW_END_IST.tz_convert("UTC")
 
 
 def main():
-    print("📥 Loading clean Sentinel-1 metadata...")
+
+    print("📥 Loading Sentinel-1 metadata...")
+
+    if not INPUT_PATH.exists():
+        print("\n❌ Sentinel-1 metadata file not found:")
+        print(INPUT_PATH)
+        return
 
     df = pd.read_csv(
         INPUT_PATH,
@@ -44,7 +54,10 @@ def main():
         ],
     )
 
-    # Ensure acquisition timestamps are UTC-aware.
+    # -----------------------------------------------------
+    # Clean acquisition timestamps
+    # -----------------------------------------------------
+
     df["acquisition_time_utc"] = pd.to_datetime(
         df["acquisition_time_utc"],
         errors="coerce",
@@ -57,165 +70,266 @@ def main():
 
     df = df.sort_values(
         by="acquisition_time_utc"
-    ).copy()
+    ).reset_index(drop=True)
 
-    # Build time window around the exact event.
-    event_start = EVENT_TIME_UTC - pd.Timedelta(
-        days=BEFORE_DAYS
-    )
 
-    event_end = EVENT_TIME_UTC + pd.Timedelta(
-        days=AFTER_DAYS
-    )
+    # =====================================================
+    # FILTER REQUIRED ANALYSIS WINDOW
+    # =====================================================
 
     nearby = df[
         (
-            df["acquisition_time_utc"] >= event_start
+            df["acquisition_time_utc"]
+            >= WINDOW_START_UTC
         )
-        & (
-            df["acquisition_time_utc"] <= event_end
+        &
+        (
+            df["acquisition_time_utc"]
+            <= WINDOW_END_UTC
         )
     ].copy()
 
-    print("\n📍 Sentinel-1 event-scene search")
+
+    # =====================================================
+    # DISPLAY WINDOW
+    # =====================================================
+
+    print("\n" + "=" * 70)
+    print("📡 TRINETRA SENTINEL-1 ANALYSIS")
+    print("=" * 70)
+
     print(
-        f"Event time (IST): "
-        f"{EVENT_TIME_IST.strftime('%Y-%m-%d %H:%M:%S %Z')}"
+        "\nAnalysis window (IST):"
     )
+
     print(
-        f"Event time (UTC): "
-        f"{EVENT_TIME_UTC.strftime('%Y-%m-%d %H:%M:%S %Z')}"
+        f"{WINDOW_START_IST.strftime('%Y-%m-%d %H:%M:%S %Z')}"
+        f" → "
+        f"{WINDOW_END_IST.strftime('%Y-%m-%d %H:%M:%S %Z')}"
     )
+
     print(
-        f"Search window: "
-        f"{event_start.strftime('%Y-%m-%d')} → "
-        f"{event_end.strftime('%Y-%m-%d')}"
+        "\nAnalysis window (UTC):"
     )
+
+    print(
+        f"{WINDOW_START_UTC.strftime('%Y-%m-%d %H:%M:%S %Z')}"
+        f" → "
+        f"{WINDOW_END_UTC.strftime('%Y-%m-%d %H:%M:%S %Z')}"
+    )
+
+
+    # =====================================================
+    # NO DATA
+    # =====================================================
 
     if nearby.empty:
-        print("\n⚠️ No Sentinel-1 scenes found in this window.")
+
         print(
-            "Increase BEFORE_DAYS and AFTER_DAYS "
-            "to 21 or 30 days."
+            "\n⚠️ No Sentinel-1 scenes found "
+            "inside the requested window."
         )
+
+        print(
+            "\nPossible reason:"
+        )
+
+        print(
+            "The current sentinel1_metadata.csv "
+            "does not contain products for this period."
+        )
+
         return
 
-    # Calculate exact distance from selected event.
-    nearby["hours_from_event"] = (
-        nearby["acquisition_time_utc"]
-        - EVENT_TIME_UTC
-    ).dt.total_seconds() / 3600
 
-    nearby["days_from_event"] = (
-        nearby["hours_from_event"] / 24
-    ).round(2)
+    # =====================================================
+    # CALCULATE RELATION TO WINDOW
+    # =====================================================
 
-    # Important: use exact time, not just calendar date.
-    nearby["relation_to_event"] = (
-        nearby["hours_from_event"]
-        .apply(
-            lambda hours: (
-                "BEFORE"
-                if hours < 0
-                else "AFTER"
-            )
-        )
+    # Split the requested period into two halves.
+    #
+    # BEFORE:
+    # 19 Aug → 31 Aug
+    #
+    # AFTER:
+    # 1 Sep → 19 Sep
+    #
+    # This gives us a practical before/after grouping
+    # for the MVP satellite analysis window.
+
+    midpoint = pd.Timestamp(
+        "2026-09-01 00:00:00",
+        tz="UTC",
     )
 
-    nearby = nearby.sort_values(
-        by="acquisition_time_utc"
+    nearby["analysis_period"] = nearby[
+        "acquisition_time_utc"
+    ].apply(
+        lambda timestamp:
+        "BEFORE"
+        if timestamp < midpoint
+        else "AFTER"
     )
 
-    print(f"\n✅ Scenes found: {len(nearby)}")
 
-    print("\n📋 Candidate before/after scenes:")
+    # =====================================================
+    # PRINT ALL AVAILABLE SCENES
+    # =====================================================
+
+    print(
+        f"\n✅ Sentinel-1 scenes found: "
+        f"{len(nearby)}"
+    )
+
+    print("\n📋 Available Sentinel-1 scenes:\n")
+
+    columns_to_show = [
+        "product_name",
+        "acquisition_time_utc",
+        "analysis_period",
+        "product_id",
+    ]
+
+    existing_columns = [
+        column
+        for column in columns_to_show
+        if column in nearby.columns
+    ]
+
     print(
         nearby[
-            [
-                "product_name",
-                "acquisition_time_utc",
-                "hours_from_event",
-                "days_from_event",
-                "relation_to_event",
-                "product_id",
-            ]
+            existing_columns
         ].to_string(
             index=False
         )
     )
 
+
+    # =====================================================
+    # BEFORE / AFTER GROUPS
+    # =====================================================
+
     before = nearby[
-        nearby["relation_to_event"] == "BEFORE"
+        nearby["analysis_period"] == "BEFORE"
     ].copy()
 
     after = nearby[
-        nearby["relation_to_event"] == "AFTER"
+        nearby["analysis_period"] == "AFTER"
     ].copy()
 
-    if before.empty:
-        print("\n⚠️ No before-event Sentinel-1 scene found.")
 
-    if after.empty:
-        print("\n⚠️ No after-event Sentinel-1 scene found.")
+    print("\n" + "-" * 70)
 
-    if not before.empty and not after.empty:
-        # Last acquisition before the event.
+    print(
+        f"📊 BEFORE scenes: "
+        f"{len(before)}"
+    )
+
+    print(
+        f"📊 AFTER scenes : "
+        f"{len(after)}"
+    )
+
+
+    # =====================================================
+    # BEST BEFORE / AFTER CANDIDATES
+    # =====================================================
+
+    if not before.empty:
+
         best_before = before.iloc[-1]
 
-        # First acquisition after the event.
-        best_after = after.iloc[0]
+        print(
+            "\n⭐ Latest BEFORE scene"
+        )
 
-        print("\n⭐ Recommended Sentinel-1 scene pair")
-
-        print("\nBEFORE EVENT")
         print(
             f"Time       : "
             f"{best_before['acquisition_time_utc']}"
         )
-        print(
-            f"Hours away : "
-            f"{best_before['hours_from_event']:.2f}"
-        )
+
         print(
             f"Product ID : "
             f"{best_before['product_id']}"
         )
+
         print(
             f"Product    : "
             f"{best_before['product_name']}"
         )
 
-        print("\nAFTER EVENT")
+    else:
+
+        print(
+            "\n⚠️ No BEFORE Sentinel-1 scene "
+            "is currently available."
+        )
+
+
+    if not after.empty:
+
+        best_after = after.iloc[0]
+
+        print(
+            "\n⭐ Earliest AFTER scene"
+        )
+
         print(
             f"Time       : "
             f"{best_after['acquisition_time_utc']}"
         )
-        print(
-            f"Hours away : "
-            f"{best_after['hours_from_event']:.2f}"
-        )
+
         print(
             f"Product ID : "
             f"{best_after['product_id']}"
         )
+
         print(
             f"Product    : "
             f"{best_after['product_name']}"
         )
 
+    else:
+
         print(
-            "\n✅ Pairing logic: last available SAR scene "
-            "before the event and first available SAR scene "
-            "after the event."
+            "\n⚠️ No AFTER Sentinel-1 scene "
+            "is currently available."
+        )
+
+
+    # =====================================================
+    # FINAL STATUS
+    # =====================================================
+
+    print("\n" + "=" * 70)
+
+    if not before.empty and not after.empty:
+
+        print(
+            "✅ Sentinel-1 before/after scene selection ready."
         )
 
         print(
-            "\n⚠️ Interpretation note: This pair is selected "
-            "for candidate water/flood-change analysis. "
-            "It does not alone confirm a flood; validation "
-            "with river telemetry, rainfall, terrain and "
-            "official incident evidence is required."
+            "These scenes can now be used for "
+            "SAR VV change / candidate water analysis."
         )
+
+    elif not nearby.empty:
+
+        print(
+            "⚠️ Sentinel-1 metadata exists, "
+            "but a complete before/after pair "
+            "is not currently available."
+        )
+
+    else:
+
+        print(
+            "❌ Sentinel-1 analysis cannot proceed "
+            "with the current metadata."
+        )
+
+    print("=" * 70)
 
 
 if __name__ == "__main__":

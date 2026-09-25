@@ -65,3 +65,9 @@ htmlcov/
 # Local generated files
 downloads/
 tmp/
+
+data/satellite/s1_processed/*.tiff
+data/satellite/raw/sentinel2/*.jp2
+
+data/satellite/s1_processed/*.tiff
+data/satellite/raw/sentinel2/*.jp2
