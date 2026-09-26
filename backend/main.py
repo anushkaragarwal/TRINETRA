@@ -1,5 +1,6 @@
 import os
 import math
+
 import pandas as pd
 
 from dotenv import load_dotenv
@@ -83,8 +84,8 @@ FINAL_EVENT_OUTPUT = (
 
 def clean(data):
     """
-    Recursively remove NaN / infinite values so FastAPI
-    can safely serialize the response.
+    Recursively convert NaN / infinite values to None
+    so FastAPI can safely serialize the response.
     """
 
     if isinstance(data, list):
@@ -92,8 +93,8 @@ def clean(data):
 
     if isinstance(data, dict):
         return {
-            k: clean(v)
-            for k, v in data.items()
+            key: clean(value)
+            for key, value in data.items()
         }
 
     if isinstance(data, float):
@@ -103,16 +104,48 @@ def clean(data):
     return data
 
 
+def optional_float(value):
+    """
+    Convert a value to float while preserving missing values
+    as None.
+
+    IMPORTANT:
+    Missing hazard data must NOT become 0.
+    """
+
+    try:
+        if pd.isna(value):
+            return None
+
+        number = float(value)
+
+        if not math.isfinite(number):
+            return None
+
+        return number
+
+    except (TypeError, ValueError):
+        return None
+
+
 def safe_float(value, default=0.0):
     """
-    Safely convert a value to float.
+    Convert a value to float.
+
+    Used only for fields where a fallback of zero is
+    semantically safe.
     """
 
     try:
         if pd.isna(value):
             return default
 
-        return float(value)
+        number = float(value)
+
+        if not math.isfinite(number):
+            return default
+
+        return number
 
     except (TypeError, ValueError):
         return default
@@ -140,6 +173,18 @@ def safe_bool(value, default=False):
     return default
 
 
+def clean_string(value, default=""):
+    """
+    Safely convert a value to a string while preserving
+    missing values as the supplied default.
+    """
+
+    if pd.isna(value):
+        return default
+
+    return str(value)
+
+
 # ============================================================
 # HEALTH
 # ============================================================
@@ -148,6 +193,7 @@ def safe_bool(value, default=False):
 def health():
 
     try:
+
         client.admin.command("ping")
 
         return {
@@ -217,22 +263,30 @@ def refresh_all():
 def trinetra_result():
 
     """
-    Return the final frozen TRINETRA MVP event.
+    Return the final event-level TRINETRA MVP result.
 
-    IMPORTANT:
-    This endpoint intentionally reads the already-generated
-    final event output instead of recalculating hazard scores.
+    The endpoint reads the already-generated final event
+    dashboard CSV.
 
-    The final event pipeline already applies:
-        River       = 40%
-        Rainfall    = 30%
-        Landslide   = 30%
+    Overall TRINETRA formula:
 
-    This keeps the API and dashboard synchronized with the
-    final MVP output.
+        H = 0.40 * River
+          + 0.30 * Rainfall
+          + 0.30 * Terrain
+
+    Landslide remains a separate hazard layer.
+
+    If River, Rainfall, or Terrain is unavailable for the
+    selected event, the overall result remains PARTIAL.
+
+    Missing values are NEVER converted to zero.
     """
 
     try:
+
+        # ----------------------------------------------------
+        # CHECK FINAL OUTPUT
+        # ----------------------------------------------------
 
         if not os.path.exists(FINAL_EVENT_OUTPUT):
 
@@ -245,70 +299,310 @@ def trinetra_result():
                 ),
             }
 
-        df = pd.read_csv(FINAL_EVENT_OUTPUT)
+        # ----------------------------------------------------
+        # LOAD FINAL EVENT OUTPUT
+        # ----------------------------------------------------
+
+        df = pd.read_csv(
+            FINAL_EVENT_OUTPUT
+        )
 
         if df.empty:
 
             return {
                 "project": "TRINETRA",
                 "status": "error",
-                "message": "Final TRINETRA event output is empty",
+                "message": (
+                    "Final TRINETRA event output is empty"
+                ),
             }
 
+        # The current pipeline produces one selected event.
         row = df.iloc[0]
-
-        # ----------------------------------------------------
-        # FINAL MVP COMPONENT SCORES
-        # ----------------------------------------------------
-
-        river_score = safe_float(
-            row.get("river_risk_score_0_100", 0)
-        )
-
-        rainfall_score = safe_float(
-            row.get("rainfall_risk_score_0_100", 0)
-        )
-
-        landslide_score = safe_float(
-    row.get("landslide_hazard_score_0_100", 0)
-)
-        final_score = safe_float(
-            row.get("trinetra_hazard_score_0_100", 0)
-        )
-
-        satellite_score = safe_float(
-    row.get("satellite_evidence_score_0_100", 0)
-)
-
-        risk_level = str(
-            row.get(
-                "trinetra_hazard_level",
-                "UNKNOWN",
-            )
-        )
 
         # ----------------------------------------------------
         # EVENT INFORMATION
         # ----------------------------------------------------
 
-        event_id = str(
+        event_id = clean_string(
             row.get("event_id", "")
         )
 
-        event_date = str(
+        station_name = clean_string(
+            row.get("station_name", "")
+        )
+
+        event_time = clean_string(
+            row.get("event_time_ist", "")
+        )
+
+        event_date = clean_string(
             row.get("event_date", "")
         )
 
+        district = clean_string(
+            row.get("district", "")
+        )
+
+        latitude = optional_float(
+            row.get("latitude")
+        )
+
+        longitude = optional_float(
+            row.get("longitude")
+        )
+
+        # ----------------------------------------------------
+        # COMPONENT SCORES
+        # ----------------------------------------------------
+
+        river_score = optional_float(
+            row.get("river_risk_score_0_100")
+        )
+
+        rainfall_score = optional_float(
+            row.get("rainfall_risk_score_0_100")
+        )
+
+        terrain_score = optional_float(
+            row.get("terrain_hazard_score_0_100")
+        )
+
+        landslide_score = optional_float(
+            row.get("landslide_hazard_score_0_100")
+        )
+
+        satellite_score = optional_float(
+            row.get("satellite_evidence_score_0_100")
+        )
+
+        final_score = optional_float(
+            row.get("trinetra_hazard_score_0_100")
+        )
+
+        # ----------------------------------------------------
+        # COMPONENT LEVELS
+        # ----------------------------------------------------
+
+        river_level = clean_string(
+            row.get(
+                "river_risk_level",
+                "UNKNOWN",
+            ),
+            "UNKNOWN",
+        )
+
+        rainfall_level = clean_string(
+            row.get(
+                "rainfall_risk_level",
+                "PARTIAL",
+            ),
+            "PARTIAL",
+        )
+
+        terrain_level = clean_string(
+            row.get(
+                "terrain_hazard_level",
+                "UNKNOWN",
+            ),
+            "UNKNOWN",
+        )
+
+        landslide_level = clean_string(
+            row.get(
+                "landslide_hazard_level",
+                "UNKNOWN",
+            ),
+            "UNKNOWN",
+        )
+
+        final_level = clean_string(
+            row.get(
+                "trinetra_hazard_level",
+                "UNKNOWN",
+            ),
+            "UNKNOWN",
+        )
+
+        satellite_class = clean_string(
+            row.get(
+                "satellite_evidence_class",
+                "",
+            )
+        )
+
+        satellite_status = clean_string(
+            row.get(
+                "satellite_evidence_status",
+                "",
+            )
+        )
+
+        # ----------------------------------------------------
+        # AVAILABILITY
+        # ----------------------------------------------------
+
         rainfall_available = safe_bool(
-            row.get("rainfall_available", False)
+            row.get(
+                "rainfall_available",
+                False,
+            )
         )
 
-        rainfall_start = str(
-            row.get("rainfall_coverage_start", "")
+        # ----------------------------------------------------
+        # RISK / ALERT
+        # ----------------------------------------------------
+
+        alert = final_level in {
+            "HIGH",
+            "CRITICAL",
+        }
+
+        # PARTIAL is intentionally NOT treated as an alert.
+        if final_level == "PARTIAL":
+            alert = False
+
+        # ----------------------------------------------------
+        # RAINFALL INFORMATION
+        # ----------------------------------------------------
+
+        rainfall_observations = safe_float(
+            row.get(
+                "rainfall_observations",
+                0,
+            ),
+            0,
         )
 
-        rainfall_end = str(
-            row.get("rainfall_coverage_end", "")
+        rainfall_max_mm = optional_float(
+            row.get("rainfall_max_mm")
+        )
+
+        rainfall_mean_mm = optional_float(
+            row.get("rainfall_mean_mm")
+        )
+
+        rainfall_start = clean_string(
+            row.get(
+                "rainfall_coverage_start",
+                "",
+            )
+        )
+
+        rainfall_end = clean_string(
+            row.get(
+                "rainfall_coverage_end",
+                "",
+            )
+        )
+
+        # ----------------------------------------------------
+        # LANDSLIDE INFORMATION
+        # ----------------------------------------------------
+
+        landslide_max_score = optional_float(
+            row.get(
+                "landslide_hazard_max_score_0_100"
+            )
+        )
+
+        landslide_probability_median = optional_float(
+            row.get(
+                "landslide_probability_median"
+            )
+        )
+
+        landslide_probability_max = optional_float(
+            row.get(
+                "landslide_probability_max"
+            )
+        )
+
+        landslide_slope_median = optional_float(
+            row.get(
+                "landslide_slope_median_deg"
+            )
+        )
+
+        landslide_slope_max = optional_float(
+            row.get(
+                "landslide_slope_max_deg"
+            )
+        )
+
+        landslide_elevation_median = optional_float(
+            row.get(
+                "landslide_elevation_median_m"
+            )
+        )
+
+        landslide_cells = safe_float(
+            row.get(
+                "landslide_cells_used",
+                0,
+            ),
+            0,
+        )
+
+        # ----------------------------------------------------
+        # TERRAIN INFORMATION
+        # ----------------------------------------------------
+
+        terrain_max_score = optional_float(
+            row.get(
+                "terrain_hazard_max_score_0_100"
+            )
+        )
+
+        terrain_slope_median = optional_float(
+            row.get(
+                "terrain_slope_median_deg"
+            )
+        )
+
+        terrain_slope_max = optional_float(
+            row.get(
+                "terrain_slope_max_deg"
+            )
+        )
+
+        terrain_elevation_median = optional_float(
+            row.get(
+                "terrain_elevation_median_m"
+            )
+        )
+
+        terrain_cells = safe_float(
+            row.get(
+                "terrain_cells_used",
+                0,
+            ),
+            0,
+        )
+
+        # ----------------------------------------------------
+        # WEIGHTS
+        # ----------------------------------------------------
+
+        river_weight = optional_float(
+            row.get(
+                "river_weight",
+                0.40,
+            )
+        )
+
+        rainfall_weight = optional_float(
+            row.get(
+                "rainfall_weight",
+                0.30,
+            )
+        )
+
+        terrain_weight = optional_float(
+            row.get(
+                "terrain_weight",
+                0.30,
+            )
         )
 
         # ----------------------------------------------------
@@ -321,63 +615,94 @@ def trinetra_result():
 
             "status": "ok",
 
-            "hazard_score": round(
-                final_score,
-                2,
+            # Overall result
+            "hazard_score": (
+                round(final_score, 2)
+                if final_score is not None
+                else None
             ),
 
-            "risk_level": risk_level,
+            "risk_level": final_level,
 
-            "alert": risk_level in {
-                "HIGH",
-                "CRITICAL",
-            },
+            "alert": alert,
+
+            # ------------------------------------------------
+            # COMPONENTS
+            # ------------------------------------------------
 
             "components": {
 
-    "river_score": round(
-        river_score,
-        2,
-    ),
+                "river": {
+                    "score": (
+                        round(river_score, 2)
+                        if river_score is not None
+                        else None
+                    ),
+                    "level": river_level,
+                    "weight": river_weight,
+                },
 
-    "rainfall_score": round(
-        rainfall_score,
-        2,
-    ),
+                "rainfall": {
+                    "score": (
+                        round(rainfall_score, 2)
+                        if rainfall_score is not None
+                        else None
+                    ),
+                    "level": rainfall_level,
+                    "weight": rainfall_weight,
+                    "available": rainfall_available,
+                },
 
-    "landslide_score": round(
-        landslide_score,
-        2,
-    ),
+                "terrain": {
+                    "score": (
+                        round(terrain_score, 2)
+                        if terrain_score is not None
+                        else None
+                    ),
+                    "level": terrain_level,
+                    "weight": terrain_weight,
+                },
 
-    "satellite_score": round(
-        satellite_score,
-        2,
-    ),
+                "landslide": {
+                    "score": (
+                        round(landslide_score, 2)
+                        if landslide_score is not None
+                        else None
+                    ),
+                    "level": landslide_level,
+                },
 
-    # Backward-compatible fields used by the existing dashboard
-    "terrain_score": round(
-        max(
-            [
-                safe_float(x.get("terrain_hazard_score", 0))
-                for x in get_latest_terrain()
-                if isinstance(x, dict)
-            ],
-            default=0,
-        ),
-        2,
-    ),
+                "satellite": {
+                    "score": (
+                        round(satellite_score, 2)
+                        if satellite_score is not None
+                        else None
+                    ),
+                    "class": satellite_class,
+                    "status": satellite_status,
+                },
 
-    "satellite_products": len(
-        get_latest_satellite()
-    ),
-},
+            },
+
+            # ------------------------------------------------
+            # EVENT
+            # ------------------------------------------------
 
             "event": {
 
                 "event_id": event_id,
 
+                "station_name": station_name,
+
+                "event_time_ist": event_time,
+
                 "event_date": event_date,
+
+                "district": district,
+
+                "latitude": latitude,
+
+                "longitude": longitude,
 
                 "rainfall_available":
                     rainfall_available,
@@ -387,14 +712,140 @@ def trinetra_result():
 
                 "rainfall_coverage_end":
                     rainfall_end,
+
             },
+
+            # ------------------------------------------------
+            # RAINFALL DETAILS
+            # ------------------------------------------------
+
+            "rainfall_details": {
+
+                "observations":
+                    rainfall_observations,
+
+                "max_mm":
+                    rainfall_max_mm,
+
+                "mean_mm":
+                    rainfall_mean_mm,
+
+            },
+
+            # ------------------------------------------------
+            # TERRAIN DETAILS
+            # ------------------------------------------------
+
+            "terrain_details": {
+
+                "max_score":
+                    terrain_max_score,
+
+                "slope_median_deg":
+                    terrain_slope_median,
+
+                "slope_max_deg":
+                    terrain_slope_max,
+
+                "elevation_median_m":
+                    terrain_elevation_median,
+
+                "cells_used":
+                    terrain_cells,
+
+            },
+
+            # ------------------------------------------------
+            # LANDSLIDE DETAILS
+            # ------------------------------------------------
+
+            "landslide_details": {
+
+                "max_score":
+                    landslide_max_score,
+
+                "probability_median":
+                    landslide_probability_median,
+
+                "probability_max":
+                    landslide_probability_max,
+
+                "slope_median_deg":
+                    landslide_slope_median,
+
+                "slope_max_deg":
+                    landslide_slope_max,
+
+                "elevation_median_m":
+                    landslide_elevation_median,
+
+                "cells_used":
+                    landslide_cells,
+
+            },
+
+            # ------------------------------------------------
+            # SATELLITE DETAILS
+            # ------------------------------------------------
+
+            "satellite_details": {
+
+                "score":
+                    (
+                        round(satellite_score, 2)
+                        if satellite_score is not None
+                        else None
+                    ),
+
+                "class":
+                    satellite_class,
+
+                "status":
+                    satellite_status,
+
+                "sentinel2_candidate_new_water_ha":
+                    optional_float(
+                        row.get(
+                            "sentinel2_candidate_new_water_ha"
+                        )
+                    ),
+
+                "sentinel2_net_water_change_ha":
+                    optional_float(
+                        row.get(
+                            "sentinel2_net_water_change_ha"
+                        )
+                    ),
+
+                "sentinel1_mean_vv_change_db":
+                    optional_float(
+                        row.get(
+                            "sentinel1_mean_vv_change_db"
+                        )
+                    ),
+
+                "sentinel1_candidate_new_water_ha":
+                    optional_float(
+                        row.get(
+                            "sentinel1_candidate_new_water_ha"
+                        )
+                    ),
+
+            },
+
+            # ------------------------------------------------
+            # DATA SOURCES
+            # ------------------------------------------------
 
             "data_sources": {
 
                 "river": "CWC",
 
                 "rainfall":
-                    "existing rainfall pipeline",
+                    "NWDP rainfall pipeline",
+
+                "terrain":
+                    "DEM",
 
                 "landslide":
                     "DEM + landslide ML pipeline",
@@ -402,9 +853,8 @@ def trinetra_result():
                 "satellite":
                     "Copernicus Sentinel-1/Sentinel-2",
 
-                "terrain":
-                    "DEM",
             },
+
         }
 
         return clean(response)
