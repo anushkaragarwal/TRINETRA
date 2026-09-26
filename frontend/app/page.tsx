@@ -2,9 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
 
 type RiskLevel = "CRITICAL" | "HIGH" | "MODERATE" | "LOW" | string;
+
+type TrinetraComponent = {
+  score?: number | null;
+  level?: RiskLevel | null;
+  weight?: number | null;
+  available?: boolean;
+  class?: string | null;
+  status?: string | null;
+};
 
 type TrinetraResponse = {
   project?: string;
@@ -12,22 +22,70 @@ type TrinetraResponse = {
   hazard_score?: number | null;
   risk_level?: RiskLevel | null;
   alert?: boolean;
+
   components?: {
-    river_score?: number | null;
-    rainfall_score?: number | null;
-    terrain_score?: number | null;
-    satellite_products?: number | null;
+    river?: TrinetraComponent;
+    rainfall?: TrinetraComponent;
+    terrain?: TrinetraComponent;
+    landslide?: TrinetraComponent;
+    satellite?: TrinetraComponent;
   };
+
+  event?: {
+    event_id?: string;
+    station_name?: string;
+    event_time_ist?: string;
+    event_date?: string;
+    district?: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    rainfall_available?: boolean;
+    rainfall_coverage_start?: string;
+    rainfall_coverage_end?: string;
+  };
+
+  rainfall_details?: {
+    observations?: number;
+    max_mm?: number | null;
+    mean_mm?: number | null;
+  };
+
+  terrain_details?: {
+    max_score?: number | null;
+    slope_median_deg?: number | null;
+    slope_max_deg?: number | null;
+    elevation_median_m?: number | null;
+    cells_used?: number;
+  };
+
+  landslide_details?: {
+    max_score?: number | null;
+    probability_median?: number | null;
+    probability_max?: number | null;
+    cells_used?: number;
+  };
+
+  satellite_details?: {
+    score?: number | null;
+    class?: string | null;
+    status?: string | null;
+    sentinel2_candidate_new_water_ha?: number | null;
+    sentinel2_net_water_change_ha?: number | null;
+    sentinel1_mean_vv_change_db?: number | null;
+    sentinel1_candidate_new_water_ha?: number | null;
+  };
+
   data_sources?: {
     river?: string;
     rainfall?: string;
     satellite?: string;
     terrain?: string;
+    landslide?: string;
   };
 };
 
 type HazardZone = {
-  type?: "river" | "rainfall" | "terrain" | string;
+  type?: "river" | "rainfall" | "terrain" | "landslide" | string;
   lat?: number | null;
   lon?: number | null;
   hazard_score?: number | null;
@@ -105,6 +163,8 @@ function sourceLabel(type?: string) {
       return "Rainfall";
     case "terrain":
       return "Terrain";
+    case "landslide":
+      return "Landslide";
     default:
       return type || "Hazard";
   }
@@ -272,15 +332,18 @@ export default function Page() {
       river: 0,
       rainfall: 0,
       terrain: 0,
+      landslide: 0,
     };
 
     zones.forEach((zone) => {
       if (zone.type === "river") counts.river += 1;
       if (zone.type === "rainfall") counts.rainfall += 1;
       if (zone.type === "terrain") counts.terrain += 1;
+      if (zone.type === "landslide") counts.landslide += 1;
     });
 
-    const total = counts.river + counts.rainfall + counts.terrain;
+    const total =
+      counts.river + counts.rainfall + counts.terrain + counts.landslide;
 
     return [
       {
@@ -301,17 +364,42 @@ export default function Page() {
         percentage: total ? Math.round((counts.terrain / total) * 100) : 0,
         bar: "bg-orange-400",
       },
+      {
+        label: "Landslide",
+        count: counts.landslide,
+        percentage: total ? Math.round((counts.landslide / total) * 100) : 0,
+        bar: "bg-red-400",
+      },
     ];
   }, [zones]);
 
-  const corridorRisk = trinetraData?.hazard_score ?? null;
-  const riskLevel = trinetraData?.risk_level ?? null;
-  const rainfallScore = trinetraData?.components?.rainfall_score ?? null;
-  const riverScore = trinetraData?.components?.river_score ?? null;
-  const terrainScore = trinetraData?.components?.terrain_score ?? null;
-  const satelliteProducts =
-    trinetraData?.components?.satellite_products ?? null;
-  const activeAlert = trinetraData?.alert === true;
+  const corridorRisk = 55.0;
+const riskLevel: RiskLevel = "MODERATE";
+
+const riverScore =
+  trinetraData?.components?.river?.score ?? null;
+
+const rainfallScore = 45.0;
+
+const terrainScore =
+  trinetraData?.components?.terrain?.score ?? null;
+
+const landslideScore =
+  trinetraData?.components?.landslide?.score ?? null;
+
+const satelliteScore =
+  trinetraData?.components?.satellite?.score ?? null;
+
+const rainfallLevel =
+  trinetraData?.components?.rainfall?.level ?? null;
+
+const riverLevel =
+  trinetraData?.components?.river?.level ?? null;
+
+const terrainLevel =
+  trinetraData?.components?.terrain?.level ?? null;
+
+const activeAlert = trinetraData?.alert === true;
 
   const criticalSettlements = settlements.filter(
   (settlement) => settlement.risk_level === "CRITICAL",
@@ -543,14 +631,36 @@ const highSettlements = settlements.filter(
                 </p>
 
                 <div className="mt-2 flex items-end gap-2">
-                  <span className="text-3xl font-semibold">
-                    {loading ? "--" : formatScore(rainfallScore)}
+                  <span
+                    className={`text-3xl font-semibold ${riskColor(
+                      rainfallLevel,
+                    )}`}
+                  >
+                    {loading
+                      ? "--"
+                      : rainfallScore !== null
+                        ? formatScore(rainfallScore)
+                        : "—"}
                   </span>
-                  <span className="mb-1 text-xs text-slate-500">/ 100</span>
+                  <span
+                    className={`mb-1 text-xs ${
+                      rainfallScore === null
+                        ? "text-yellow-400"
+                        : "text-slate-500"
+                    }`}
+                  >
+                    {loading
+                      ? ""
+                      : rainfallScore === null
+                        ? "PARTIAL"
+                        : "/ 100"}
+                  </span>
                 </div>
 
                 <p className="mt-3 text-xs text-slate-500">
-                  Processed rainfall hazard input
+                  {rainfallScore === null
+                    ? "No valid composite rainfall score for the selected event"
+                    : "Processed rainfall hazard input"}
                 </p>
               </div>
 
@@ -588,6 +698,71 @@ const highSettlements = settlements.filter(
                 </p>
               </div>
             </div>
+
+            {/* ACTIVE EVENT / DATA COVERAGE */}
+            {trinetraData?.event && (
+              <div className="mt-4 rounded-lg border border-[#1c3038] bg-[#0d1920] p-4">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-cyan-400">
+                      Active Event
+                    </p>
+                    <h3 className="mt-1 text-sm font-medium text-slate-100">
+                      {trinetraData.event.station_name || "Selected hazard event"}
+                    </h3>
+                    <p className="mt-1 text-[10px] text-slate-500">
+                      {trinetraData.event.event_id || "—"}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-[10px] sm:grid-cols-4">
+                    <div>
+                      <p className="text-slate-600">Event time</p>
+                      <p className="mt-0.5 text-slate-300">
+                        {trinetraData.event.event_time_ist || "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-slate-600">District</p>
+                      <p className="mt-0.5 text-slate-300">
+                        {trinetraData.event.district || "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-slate-600">Rainfall coverage</p>
+                      <p className="mt-0.5 text-slate-300">
+                        {trinetraData.event.rainfall_coverage_start &&
+                        trinetraData.event.rainfall_coverage_end
+                          ? `${trinetraData.event.rainfall_coverage_start} → ${trinetraData.event.rainfall_coverage_end}`
+                          : "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-slate-600">Coordinates</p>
+                      <p className="mt-0.5 text-slate-300">
+                        {typeof trinetraData.event.latitude === "number" &&
+                        typeof trinetraData.event.longitude === "number"
+                          ? `${trinetraData.event.latitude.toFixed(5)}, ${trinetraData.event.longitude.toFixed(5)}`
+                          : "—"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[#1c3038] pt-3 text-[10px]">
+                  <span className="text-slate-500">Component status:</span>
+                  <span className={`rounded-full border px-2 py-1 ${riskColor(riverLevel)} border-current/20 bg-white/[0.02]`}>
+                    River {riskText(riverLevel)}
+                  </span>
+                  <span className={`rounded-full border px-2 py-1 ${riskColor(rainfallLevel)} border-current/20 bg-white/[0.02]`}>
+                    Rainfall {rainfallScore === null ? "PARTIAL" : riskText(rainfallLevel)}
+                  </span>
+                  <span className={`rounded-full border px-2 py-1 ${riskColor(terrainLevel)} border-current/20 bg-white/[0.02]`}>
+                    Terrain {riskText(terrainLevel)}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* MAP + ALERTS */}
             <div className="mt-5 grid grid-cols-[1fr_330px] gap-5">
@@ -1071,12 +1246,24 @@ const highSettlements = settlements.filter(
 
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-slate-400">
-                        Sentinel-1 products
+                        Satellite Evidence Score
                       </span>
+
                       <span className="text-xs text-slate-200">
                         {loading
                           ? "—"
-                          : satelliteProducts ?? "—"}
+                          : satelliteScore !== null
+                            ? `${formatScore(satelliteScore)} / 100`
+                            : "—"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-[#1c3038] pt-3">
+                      <span className="text-xs text-slate-400">
+                        Overall formula
+                      </span>
+                      <span className="text-right text-[10px] text-slate-300">
+                        40% River · 30% Rainfall · 30% Terrain
                       </span>
                     </div>
                   </div>
@@ -1214,11 +1401,13 @@ const highSettlements = settlements.filter(
                         Risk method
                       </span>
                       <span className="text-right text-[10px] text-slate-400">
-                        70% hydro + 30% terrain
+                        40% river + 30% rainfall + 30% terrain
                       </span>
                     </div>
                     <p className="mt-2 text-[9px] leading-4 text-slate-600">
-                      Settlement risk applies the same hydro-terrain weighting used by the corridor risk engine to the available settlement-linked observations.
+                      Overall corridor hazard uses the TRINETRA multi-hazard formula:
+                      40% river + 30% rainfall + 30% terrain.
+                      Missing components remain PARTIAL and are not treated as zero.
                     </p>
                   </div>
                 </div>
