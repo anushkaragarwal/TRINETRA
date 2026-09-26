@@ -196,14 +196,9 @@ def get_rainfall_coverage(rainfall_df):
     date_col = find_column(
         rainfall_df,
         [
-            "Data Acquisition Time",
-            "timestamp",
-            "datetime",
             "date",
             "Date",
             "DATE",
-            "observation_time",
-            "time",
         ],
     )
 
@@ -449,19 +444,14 @@ def get_rainfall_risk(rainfall_df, district, event_date):
     )
     date_col = find_column(
         df,
-        ["Data Acquisition Time","timestamp", "datetime", "date", "Date",
+        ["timestamp", "datetime", "date", "Date",
          "observation_time", "time"],
         required=False,
     )
     score_col = find_column(
         df,
-        [
-            "rainfall_risk_score",
-            "rainfall_risk_score_0_100",
-            "risk_score",
-            "risk_score_0_100",
-            "rainfall_score",
-        ],
+        ["rainfall_risk_score_0_100", "risk_score",
+         "rainfall_risk_score", "risk_score_0_100"],
         required=False,
     )
     level_col = find_column(
@@ -520,24 +510,16 @@ def get_rainfall_risk(rainfall_df, district, event_date):
         )
 
     scores = pd.to_numeric(matched[score_col], errors="coerce").dropna()
-
-    # A rainfall record can exist for the event date while its composite
-    # rainfall risk score is unavailable because one or more required
-    # rainfall components are missing. Do not convert that missing score
-    # to zero and do not abort the complete event integration. The overall
-    # TRINETRA result will be marked PARTIAL when Rainfall is unavailable.
-
     if scores.empty:
-        score = np.nan
-        level = "PARTIAL"
-    else:
-        score = float(scores.max())
+        raise ValueError("Matched rainfall records contain no valid risk score.")
 
-        if level_col is not None:
-            levels = matched[level_col].dropna().astype(str)
-            level = levels.iloc[0] if not levels.empty else classify_risk(score)
-        else:
-            level = classify_risk(score)
+    score = float(scores.max())
+
+    if level_col is not None:
+        levels = matched[level_col].dropna().astype(str)
+        level = levels.iloc[0] if not levels.empty else classify_risk(score)
+    else:
+        level = classify_risk(score)
 
     measurements = []
     for candidate in [
@@ -1118,24 +1100,21 @@ def main():
     # Because the event was filtered against rainfall coverage,
     # rainfall MUST be available here.
 
-    rainfall_score = numeric(
+    if not rainfall["rainfall_available"]:
+        print(
+            "Rainfall status : MVP FALLBACK "
+            "(event-date rainfall unavailable)"
+        )
+
+    rainfall_score = float(
         rainfall[
             "rainfall_risk_score_0_100"
-        ],
-        default=np.nan,
+        ]
     )
 
     if not np.isfinite(rainfall_score):
-        print(
-            "Rainfall status : PARTIAL "
-            "(event-date rainfall records exist, but no valid "
-            "composite rainfall risk score is available)"
-        )
-    elif not rainfall["rainfall_available"]:
-        print(
-            "Rainfall status : PARTIAL "
-            "(event-date rainfall unavailable; latest record retained "
-            "for diagnostic context only)"
+        raise RuntimeError(
+            "Rainfall score is not finite."
         )
 
     print(
@@ -1225,9 +1204,14 @@ def main():
     # FINAL MULTI-HAZARD SCORE
     # ========================================================
 
-    river_valid = np.isfinite(river_score)
-    rainfall_valid = np.isfinite(rainfall_score) and rainfall["rainfall_available"]
-    terrain_valid = np.isfinite(terrain_score)
+    if not np.isfinite(river_score):
+        raise ValueError("River score is invalid.")
+
+    if not np.isfinite(rainfall_score):
+        raise ValueError("Rainfall score is invalid.")
+
+    if not np.isfinite(terrain_score):
+        raise ValueError("Terrain score is invalid.")
 
     # TRINETRA overall hazard formula:
     #
@@ -1238,63 +1222,28 @@ def main():
     # T = Terrain
     #
     # Landslide remains a separate layer and is NOT used as T.
-    #
-    # If an overall component is unavailable for the event location/time,
-    # the overall result is PARTIAL rather than treating the missing
-    # component as zero.
 
-    river_component = (
-        RIVER_WEIGHT * river_score if river_valid else np.nan
-    )
-    rainfall_component = (
-        RAINFALL_WEIGHT * rainfall_score if rainfall_valid else np.nan
-    )
-    terrain_component = (
-        TERRAIN_WEIGHT * terrain_score if terrain_valid else np.nan
-    )
+    river_component = RIVER_WEIGHT * river_score
+    rainfall_component = RAINFALL_WEIGHT * rainfall_score
+    terrain_component = TERRAIN_WEIGHT * terrain_score
 
-    overall_complete = (
-        river_valid
-        and rainfall_valid
-        and terrain_valid
-    )
-
-    if overall_complete:
-        trinetra_score = float(
-            np.clip(
-                river_component
-                + rainfall_component
-                + terrain_component,
-                0,
-                100,
-            )
+    trinetra_score = float(
+        np.clip(
+            river_component
+            + rainfall_component
+            + terrain_component,
+            0,
+            100,
         )
-        trinetra_level = classify_risk(trinetra_score)
-    else:
-        trinetra_score = np.nan
-        trinetra_level = "PARTIAL"
+    )
+
+    trinetra_level = classify_risk(trinetra_score)
 
     print("\nTRINETRA calculation:")
-    print(
-        f"River component     : "
-        f"{river_component:.2f}" if np.isfinite(river_component)
-        else "River component     : N/A"
-    )
-    print(
-        f"Rainfall component  : "
-        f"{rainfall_component:.2f}" if np.isfinite(rainfall_component)
-        else "Rainfall component  : N/A"
-    )
-    print(
-        f"Terrain component   : "
-        f"{terrain_component:.2f}" if np.isfinite(terrain_component)
-        else "Terrain component   : N/A"
-    )
-    print(
-        f"Final score         : "
-        f"{trinetra_score:.2f}" if np.isfinite(trinetra_score)
-        else "Final score         : N/A"
-    )
+    print(f"River component     : {river_component:.2f}")
+    print(f"Rainfall component  : {rainfall_component:.2f}")
+    print(f"Terrain component   : {terrain_component:.2f}")
+    print(f"Final score         : {trinetra_score:.2f}")
     print(f"Final level         : {trinetra_level}")
 
 
@@ -1552,10 +1501,9 @@ def main():
             "Terrain is derived from the local DEM hazard layer. "
             "Landslide remains a separate hazard layer and is not "
             "substituted for Terrain in the overall score. "
-            "If any River, Rainfall, or Terrain component is unavailable "
-            "for the event location/time, the overall result is marked "
-            "PARTIAL rather than treating the missing component as zero. "
-            "Satellite observations "
+            "When event-date rainfall is unavailable, the latest "
+            "available canonical rainfall-risk record is used as an "
+            "explicitly marked MVP fallback. Satellite observations "
             "are retained as supporting evidence."
         ),
     }
