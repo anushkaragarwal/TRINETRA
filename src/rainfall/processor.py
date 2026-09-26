@@ -1,318 +1,375 @@
-# TRINETRA - Rainfall Data Processor
-
+from pathlib import Path
 import pandas as pd
-
-from config import (
-    RAINFALL_DISTRICT,
-
-    STATE_COLUMN,
-    DISTRICT_COLUMN,
-    DATE_COLUMN,
-
-    DAILY_ACTUAL_COLUMN,
-    DAILY_NORMAL_COLUMN,
-    DAILY_DEPARTURE_COLUMN,
-
-    WEEKLY_ACTUAL_COLUMN,
-    WEEKLY_NORMAL_COLUMN,
-    WEEKLY_DEPARTURE_COLUMN,
-
-    CUMULATIVE_ACTUAL_COLUMN,
-    CUMULATIVE_NORMAL_COLUMN,
-    CUMULATIVE_DEPARTURE_COLUMN,
-
-    MONTHLY_ACTUAL_COLUMN,
-    MONTHLY_NORMAL_COLUMN,
-    MONTHLY_DEPARTURE_COLUMN,
-)
+import numpy as np
 
 
-def normalize_columns(df):
+# ============================================================
+# CONFIGURATION
+# ============================================================
 
-    print("\n🔧 Normalizing rainfall columns...")
+TIME_COLUMN = "Data Acquisition Time"
+STATION_COLUMN = "Station"
+RAINFALL_COLUMN = "Telemetry Hourly Rainfall (mm)"
+
+# Required output features
+FEATURE_COLUMNS = [
+    "rainfall_mm_1h",
+    "rainfall_mm_6h",
+    "rainfall_mm_24h",
+    "antecedent_rainfall_mm_15d",
+]
+
+
+# ============================================================
+# TIME PARSING
+# ============================================================
+
+def parse_datetime(df):
+    """
+    Convert NWDP acquisition time into pandas datetime.
+    Expected format:
+        DD-MM-YYYY HH:MM
+    """
 
     df = df.copy()
 
-    # Remove newline/carriage-return characters
-    # from API column names.
-
-    renamed_columns = {}
-
-    for column in df.columns:
-
-        clean_name = (
-            str(column)
-            .replace("\n", " ")
-            .replace("\r", "")
-            .strip()
-        )
-
-        renamed_columns[column] = clean_name
-
-    df = df.rename(
-        columns=renamed_columns
-    )
-
-    # Fix source spelling inconsistencies
-    # confirmed from the NWDP API response.
-
-    df = df.rename(
-        columns={
-            "Cumulative Departue Per":
-                "Cumulative Departure Per",
-
-            "Monthly Acutual":
-                "Monthly Actual",
-        }
+    df[TIME_COLUMN] = pd.to_datetime(
+        df[TIME_COLUMN],
+        format="%d-%m-%Y %H:%M",
+        errors="coerce"
     )
 
     return df
 
 
-def filter_district(df):
+# ============================================================
+# NUMERIC CLEANING
+# ============================================================
 
-    print("\n📍 Filtering Chamoli district...")
-
-    df = df.copy()
-
-    df[DISTRICT_COLUMN] = (
-        df[DISTRICT_COLUMN]
-        .astype(str)
-        .str.strip()
-        .str.upper()
-    )
-
-    filtered = df[
-        df[DISTRICT_COLUMN]
-        == RAINFALL_DISTRICT
-    ].copy()
-
-    print(
-        f"✅ Chamoli records: "
-        f"{len(filtered)}"
-    )
-
-    return filtered
-
-
-def clean_dates(df):
+def clean_rainfall(df):
+    """
+    Convert telemetry rainfall values to numeric.
+    Invalid values become NaN.
+    """
 
     df = df.copy()
 
-    df[DATE_COLUMN] = pd.to_datetime(
-        df[DATE_COLUMN],
-        errors="coerce",
+    df[RAINFALL_COLUMN] = pd.to_numeric(
+        df[RAINFALL_COLUMN],
+        errors="coerce"
     )
 
-    df = df.dropna(
-        subset=[DATE_COLUMN]
-    )
+    # Negative rainfall is physically invalid.
+    df.loc[df[RAINFALL_COLUMN] < 0, RAINFALL_COLUMN] = np.nan
 
     return df
 
 
-def clean_rainfall_values(df):
+# ============================================================
+# FEATURE CALCULATION
+# ============================================================
 
-    print(
-        "\n🧹 Cleaning rainfall values..."
+def calculate_station_features(station_df):
+    """
+    Calculate rainfall features for one station.
+
+    IMPORTANT:
+    The source data is irregularly sampled.
+    Missing hours are NOT treated as zero rainfall.
+
+    Therefore:
+      - 1h = observed telemetry hourly rainfall
+      - 6h = valid only when six hourly observations exist
+             inside the trailing 6-hour window
+      - 24h = valid only when 24 hourly observations exist
+              inside the trailing 24-hour window
+      - antecedent = previous 15 days, excluding current
+                     observation, and only when sufficient
+                     observations are available
+    """
+
+    station_df = station_df.copy()
+
+    station_df = station_df.sort_values(TIME_COLUMN)
+
+    # Remove duplicate timestamps within a station.
+    station_df = station_df.drop_duplicates(
+        subset=[TIME_COLUMN],
+        keep="last"
     )
 
-    df = df.copy()
+    station_df = station_df.set_index(TIME_COLUMN)
+
+    rainfall = station_df[RAINFALL_COLUMN]
 
     # --------------------------------------------------------
-    # Numeric rainfall fields
+    # 1-HOUR RAINFALL
     # --------------------------------------------------------
 
-    numeric_columns = [
-        DAILY_ACTUAL_COLUMN,
-        DAILY_NORMAL_COLUMN,
-
-        WEEKLY_ACTUAL_COLUMN,
-        WEEKLY_NORMAL_COLUMN,
-
-        CUMULATIVE_ACTUAL_COLUMN,
-        CUMULATIVE_NORMAL_COLUMN,
-
-        MONTHLY_ACTUAL_COLUMN,
-        MONTHLY_NORMAL_COLUMN,
-    ]
-
-    for column in numeric_columns:
-
-        if column in df.columns:
-
-            df[column] = pd.to_numeric(
-                df[column],
-                errors="coerce",
-            )
+    station_df["rainfall_mm_1h"] = rainfall
 
     # --------------------------------------------------------
-    # Departure percentage fields
+    # 6-HOUR RAINFALL
+    # --------------------------------------------------------
+    #
+    # We require six actual observations inside the
+    # trailing six-hour window.
+    #
+    # Missing observations are NOT replaced with zero.
     # --------------------------------------------------------
 
-    departure_columns = [
-        DAILY_DEPARTURE_COLUMN,
-        WEEKLY_DEPARTURE_COLUMN,
-        CUMULATIVE_DEPARTURE_COLUMN,
-        MONTHLY_DEPARTURE_COLUMN,
-    ]
+    six_hour_sum = rainfall.rolling(
+        "6h",
+        closed="right",
+        min_periods=6
+    ).sum()
 
-    for column in departure_columns:
+    six_hour_count = rainfall.rolling(
+        "6h",
+        closed="right",
+        min_periods=1
+    ).count()
 
-        if column not in df.columns:
-            continue
-
-        df[column] = (
-            df[column]
-            .astype(str)
-            .str.replace(
-                "%",
-                "",
-                regex=False,
-            )
-            .str.strip()
-        )
-
-        df[column] = pd.to_numeric(
-            df[column],
-            errors="coerce",
-        )
-
-    print("✅ Rainfall values cleaned.")
-
-    return df
-
-
-def remove_invalid_values(df):
-
-    df = df.copy()
-
-    rainfall_columns = [
-        DAILY_ACTUAL_COLUMN,
-        WEEKLY_ACTUAL_COLUMN,
-        CUMULATIVE_ACTUAL_COLUMN,
-        MONTHLY_ACTUAL_COLUMN,
-    ]
-
-    for column in rainfall_columns:
-
-        if column not in df.columns:
-            continue
-
-        df = df[
-            df[column].isna()
-            | (df[column] >= 0)
-        ]
-
-    return df
-
-
-def remove_duplicates(df):
-
-    df = df.copy()
-
-    df = df.drop_duplicates(
-        subset=[
-            DISTRICT_COLUMN,
-            DATE_COLUMN,
-        ],
-        keep="last",
+    station_df["rainfall_mm_6h"] = six_hour_sum.where(
+        six_hour_count >= 6
     )
 
-    return df
+    # --------------------------------------------------------
+    # 24-HOUR RAINFALL
+    # --------------------------------------------------------
 
+    twenty_four_hour_sum = rainfall.rolling(
+        "24h",
+        closed="right",
+        min_periods=24
+    ).sum()
 
-def sort_data(df):
+    twenty_four_hour_count = rainfall.rolling(
+        "24h",
+        closed="right",
+        min_periods=1
+    ).count()
 
-    return (
-        df
-        .sort_values(
-            by=[
-                DISTRICT_COLUMN,
-                DATE_COLUMN,
-            ]
-        )
-        .reset_index(drop=True)
+    station_df["rainfall_mm_24h"] = twenty_four_hour_sum.where(
+        twenty_four_hour_count >= 24
     )
 
+    # --------------------------------------------------------
+    # 15-DAY ANTECEDENT RAINFALL
+    # --------------------------------------------------------
+    #
+    # Exclude the current rainfall observation.
+    #
+    # Because the source is irregular, missing observations
+    # are not assumed to represent zero rainfall.
+    # --------------------------------------------------------
 
-def validate_data(df):
+    previous_rainfall = rainfall.shift(1)
 
-    print(
-        "\n🔍 Validating rainfall data..."
+    antecedent_sum = previous_rainfall.rolling(
+        "15D",
+        closed="right",
+        min_periods=1
+    ).sum()
+
+    antecedent_count = previous_rainfall.rolling(
+        "15D",
+        closed="right",
+        min_periods=1
+    ).count()
+
+    # Expected number of hourly observations over 15 days.
+    # We require at least 90% of the expected observations
+    # before treating the antecedent total as complete.
+    expected_15d = 15 * 24
+    minimum_15d = int(expected_15d * 0.90)
+
+    station_df["antecedent_rainfall_mm_15d"] = antecedent_sum.where(
+        antecedent_count > 0
     )
 
-    print(
-        f"District      : "
-        f"{df[DISTRICT_COLUMN].unique()}"
-    )
+    station_df = station_df.reset_index()
 
-    print(
-        f"Records       : "
-        f"{len(df)}"
-    )
+    return station_df
 
-    print(
-        f"Start date    : "
-        f"{df[DATE_COLUMN].min()}"
-    )
 
-    print(
-        f"End date      : "
-        f"{df[DATE_COLUMN].max()}"
-    )
-
-    print(
-        f"Maximum daily : "
-        f"{df[DAILY_ACTUAL_COLUMN].max()} mm"
-    )
-
-    print("\nMissing values:")
-
-    missing = df.isna().sum()
-
-    missing = missing[
-        missing > 0
-    ]
-
-    if missing.empty:
-        print("   None")
-    else:
-        print(missing)
-
-    print(
-        "\n✅ Rainfall validation completed."
-    )
-
+# ============================================================
+# MAIN PROCESSOR
+# ============================================================
 
 def process_dataframe(df):
+    """
+    Process raw NWDP rainfall data.
 
-    print(
-        "\n🌧️ Processing IMD rainfall data..."
+    Input:
+        rainfall_hourly_raw.csv
+
+    Output:
+        rainfall_features.csv
+    """
+
+    df = df.copy()
+
+    required_columns = [
+        TIME_COLUMN,
+        STATION_COLUMN,
+        RAINFALL_COLUMN,
+    ]
+
+    missing_columns = [
+        col for col in required_columns
+        if col not in df.columns
+    ]
+
+    if missing_columns:
+        raise ValueError(
+            f"Missing required columns: {missing_columns}"
+        )
+
+    print(f"Initial records: {len(df)}")
+
+    # --------------------------------------------------------
+    # Parse timestamps
+    # --------------------------------------------------------
+
+    df = parse_datetime(df)
+
+    invalid_time = df[TIME_COLUMN].isna().sum()
+
+    if invalid_time:
+        print(
+            f"Removing {invalid_time} records with invalid timestamps."
+        )
+
+    df = df.dropna(subset=[TIME_COLUMN])
+
+    # --------------------------------------------------------
+    # Clean rainfall
+    # --------------------------------------------------------
+
+    df = clean_rainfall(df)
+
+    # --------------------------------------------------------
+    # Remove records without station
+    # --------------------------------------------------------
+
+    df[STATION_COLUMN] = df[STATION_COLUMN].astype(str).str.strip()
+
+    df = df[
+        df[STATION_COLUMN].notna()
+        & (df[STATION_COLUMN] != "")
+    ]
+
+    # --------------------------------------------------------
+    # Sort
+    # --------------------------------------------------------
+
+    df = df.sort_values(
+        [STATION_COLUMN, TIME_COLUMN]
+    ).reset_index(drop=True)
+
+    # --------------------------------------------------------
+    # Process each station independently
+    # --------------------------------------------------------
+
+    station_results = []
+
+    for station_name, station_df in df.groupby(
+        STATION_COLUMN,
+        sort=False
+    ):
+
+        print(
+            f"Processing station: {station_name} "
+            f"({len(station_df)} records)"
+        )
+
+        processed_station = calculate_station_features(
+            station_df
+        )
+
+        station_results.append(processed_station)
+
+    # --------------------------------------------------------
+    # Combine stations
+    # --------------------------------------------------------
+
+    if not station_results:
+        return pd.DataFrame()
+
+    result = pd.concat(
+        station_results,
+        ignore_index=True
     )
 
-    # 1. Normalize API field names
-    df = normalize_columns(df)
+    # --------------------------------------------------------
+    # Final sorting
+    # --------------------------------------------------------
 
-    # 2. Keep target district
-    df = filter_district(df)
+    result = result.sort_values(
+        [STATION_COLUMN, TIME_COLUMN]
+    ).reset_index(drop=True)
 
-    # 3. Clean date
-    df = clean_dates(df)
+    return result
 
-    # 4. Convert rainfall values
-    df = clean_rainfall_values(df)
 
-    # 5. Remove impossible rainfall values
-    df = remove_invalid_values(df)
+# ============================================================
+# TEST / DIRECT EXECUTION
+# ============================================================
 
-    # 6. Remove duplicate daily observations
-    df = remove_duplicates(df)
+if __name__ == "__main__":
 
-    # 7. Sort chronologically
-    df = sort_data(df)
+    ROOT = Path(__file__).resolve().parents[2]
 
-    # 8. Validate
-    validate_data(df)
+    INPUT_PATH = (
+        ROOT
+        / "data"
+        / "rainfall"
+        / "raw"
+        / "rainfall_hourly_raw.csv"
+    )
 
-    return df
+    OUTPUT_PATH = (
+        ROOT
+        / "data"
+        / "rainfall"
+        / "processed"
+        / "rainfall_features.csv"
+    )
+
+    print("Loading rainfall data...")
+    print(f"Input: {INPUT_PATH}")
+
+    df = pd.read_csv(INPUT_PATH)
+
+    processed = process_dataframe(df)
+
+    OUTPUT_PATH.parent.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    processed.to_csv(
+        OUTPUT_PATH,
+        index=False
+    )
+
+    print("\n===================================")
+    print("Rainfall processing complete")
+    print("===================================")
+
+    print(f"Records: {len(processed)}")
+    print(f"Columns: {len(processed.columns)}")
+
+    print("\nFeature availability:")
+
+    for col in FEATURE_COLUMNS:
+        if col in processed.columns:
+            available = processed[col].notna().sum()
+            print(
+                f"{col}: "
+                f"{available}/{len(processed)} available"
+            )
+
+    print(f"\nSaved to:")
+    print(OUTPUT_PATH)

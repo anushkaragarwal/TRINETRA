@@ -1,4 +1,4 @@
-# TRINETRA - IMD / NWDP Rainfall API
+# TRINETRA - High-Frequency Rainfall API
 
 import json
 
@@ -12,6 +12,7 @@ from config import (
     RAINFALL_BATCH_SIZE,
     RAINFALL_STATE,
     RAINFALL_DISTRICT,
+    RAINFALL_AGENCY,
 )
 
 
@@ -19,14 +20,11 @@ def fetch_rainfall_batch(
     offset=0,
     limit=RAINFALL_BATCH_SIZE,
 ):
-    """
-    Fetch one batch of district-wise rainfall
-    data from NWDP / IMD.
-    """
 
     filters = json.dumps({
         "State": RAINFALL_STATE,
         "District": RAINFALL_DISTRICT,
+        "Agency": RAINFALL_AGENCY,
     })
 
     params = {
@@ -83,9 +81,6 @@ def fetch_rainfall_batch(
 def fetch_all_rainfall_data(
     batch_size=RAINFALL_BATCH_SIZE,
 ):
-    """
-    Fetch all available Chamoli rainfall records.
-    """
 
     all_records = []
 

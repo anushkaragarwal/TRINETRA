@@ -1,10 +1,15 @@
 from pathlib import Path
 import pickle
 
+import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
+
+# ============================================================
+# PATHS
+# ============================================================
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -32,151 +37,249 @@ PREDICTION_PATH = (
 )
 
 
-DISTRICT_COL = "District"
-DATE_COL = "Date"
+# ============================================================
+# COLUMNS
+# ============================================================
 
-DAILY_ACTUAL_COL = "Daily Actual"
-DAILY_NORMAL_COL = "Daily Normal"
-DAILY_DEPARTURE_COL = "Daily Departure Per"
+TIME_COL = "Data Acquisition Time"
+STATION_COL = "Station"
 
+RAIN_1H = "rainfall_mm_1h"
+RAIN_15D = "antecedent_rainfall_mm_15d"
+
+
+# ============================================================
+# BUILD NEXT 6-HOUR TARGET
+# ============================================================
+
+def build_future_6h_target(station_df):
+    """
+    Build the target:
+
+        rainfall during the next 6 hours.
+
+    Missing observations are NOT treated as zero.
+
+    A target is valid only when six actual future
+    hourly observations exist inside the next 6 hours.
+    """
+
+    station_df = (
+        station_df
+        .sort_values(TIME_COL)
+        .copy()
+    )
+
+    times = station_df[TIME_COL].to_numpy()
+    rainfall = station_df[RAIN_1H].to_numpy()
+
+    targets = np.full(
+        len(station_df),
+        np.nan
+    )
+
+    for i in range(len(station_df)):
+
+        current_time = times[i]
+
+        future_values = []
+
+        for j in range(i + 1, len(station_df)):
+
+            delta_hours = (
+                times[j] - current_time
+            ) / np.timedelta64(1, "h")
+
+            if delta_hours > 6:
+                break
+
+            if (
+                delta_hours > 0
+                and not pd.isna(rainfall[j])
+            ):
+                future_values.append(
+                    rainfall[j]
+                )
+
+        # Exactly six future hourly observations
+        # are required for a valid target.
+        if len(future_values) == 6:
+            targets[i] = sum(future_values)
+
+    station_df[
+        "forecast_target_6h"
+    ] = targets
+
+    return station_df
+
+
+# ============================================================
+# MAIN
+# ============================================================
 
 def main():
 
-    print("📥 Loading cleaned rainfall data...")
+    print("Loading rainfall features...")
+
+    if not INPUT_PATH.exists():
+        raise FileNotFoundError(
+            f"Rainfall feature file not found:\n"
+            f"{INPUT_PATH}"
+        )
 
     df = pd.read_csv(
         INPUT_PATH,
-        parse_dates=[DATE_COL],
+        parse_dates=[TIME_COL]
     )
 
-    df = df.sort_values(
-        by=[DISTRICT_COL, DATE_COL]
-    ).copy()
-
-    # -----------------------------------------------------
-    # Target
-    # -----------------------------------------------------
-
-    # shift(-1) = next day's rainfall.
-
-    df["target_rainfall_1d"] = (
-        df.groupby(DISTRICT_COL)[DAILY_ACTUAL_COL]
-        .shift(-1)
+    print(
+        f"Raw records: {len(df)}"
     )
 
-    # -----------------------------------------------------
-    # Lag features
-    # -----------------------------------------------------
+    # --------------------------------------------------------
+    # Sort
+    # --------------------------------------------------------
 
-    for lag in [1, 3, 7]:
+    df = (
+        df
+        .sort_values(
+            [STATION_COL, TIME_COL]
+        )
+        .reset_index(drop=True)
+    )
 
-        df[f"rainfall_lag_{lag}d"] = (
-            df.groupby(DISTRICT_COL)[DAILY_ACTUAL_COL]
-            .shift(lag)
+    # --------------------------------------------------------
+    # Numeric conversion
+    # --------------------------------------------------------
+
+    df[RAIN_1H] = pd.to_numeric(
+        df[RAIN_1H],
+        errors="coerce"
+    )
+
+    df[RAIN_15D] = pd.to_numeric(
+        df[RAIN_15D],
+        errors="coerce"
+    )
+
+    # --------------------------------------------------------
+    # Build target station-wise
+    # --------------------------------------------------------
+
+    station_results = []
+
+    for station, station_df in df.groupby(
+        STATION_COL,
+        sort=False
+    ):
+
+        print(
+            f"Building 6h target: {station}"
         )
 
-    # -----------------------------------------------------
-    # Rolling features
-    # -----------------------------------------------------
-
-    # Use only previous observations.
-    # shift(1) prevents today's rainfall from leaking
-    # directly into the rolling statistics.
-
-    df["rolling_mean_3d"] = (
-        df.groupby(DISTRICT_COL)[DAILY_ACTUAL_COL]
-        .transform(
-            lambda s: s.shift(1).rolling(
-                window=3,
-                min_periods=3,
-            ).mean()
+        station_result = (
+            build_future_6h_target(
+                station_df
+            )
         )
+
+        station_results.append(
+            station_result
+        )
+
+    df = pd.concat(
+        station_results,
+        ignore_index=True
     )
 
-    df["rolling_std_3d"] = (
-        df.groupby(DISTRICT_COL)[DAILY_ACTUAL_COL]
-        .transform(
-            lambda s: s.shift(1).rolling(
-                window=3,
-                min_periods=3,
-            ).std()
-        )
-    )
-
-    df["rolling_mean_7d"] = (
-        df.groupby(DISTRICT_COL)[DAILY_ACTUAL_COL]
-        .transform(
-            lambda s: s.shift(1).rolling(
-                window=7,
-                min_periods=7,
-            ).mean()
-        )
-    )
-
-    # -----------------------------------------------------
+    # --------------------------------------------------------
     # Calendar features
-    # -----------------------------------------------------
+    # --------------------------------------------------------
+
+    df["hour"] = (
+        df[TIME_COL].dt.hour
+    )
 
     df["day_of_year"] = (
-        df[DATE_COL].dt.dayofyear
+        df[TIME_COL].dt.dayofyear
     )
 
     df["month"] = (
-        df[DATE_COL].dt.month
+        df[TIME_COL].dt.month
     )
 
-    # -----------------------------------------------------
-    # Model features
-    # -----------------------------------------------------
+    # --------------------------------------------------------
+    # Forecast features
+    # --------------------------------------------------------
+    #
+    # IMPORTANT:
+    # Do not use rainfall_mm_6h or rainfall_mm_24h here.
+    #
+    # Those features are frequently unavailable because
+    # the source API has large temporal gaps.
+    #
+    # The model therefore uses features that can actually
+    # exist at the current/latest observation.
+    # --------------------------------------------------------
 
     feature_columns = [
-        "rainfall_lag_1d",
-        "rainfall_lag_3d",
-        "rainfall_lag_7d",
-
-        "rolling_mean_3d",
-        "rolling_std_3d",
-        "rolling_mean_7d",
-
-        DAILY_NORMAL_COL,
-        DAILY_DEPARTURE_COL,
-
+        RAIN_1H,
+        RAIN_15D,
+        "hour",
         "day_of_year",
         "month",
     ]
 
-    model_data = df.dropna(
-        subset=(
-            feature_columns
-            + ["target_rainfall_1d"]
+    print("\nModel features:")
+
+    for feature in feature_columns:
+        print(
+            f"  - {feature}"
         )
-    ).copy()
 
-    print(
-        "📊 Total usable rows:",
-        len(model_data),
+    # --------------------------------------------------------
+    # Training data
+    # --------------------------------------------------------
+
+    model_data = (
+        df
+        .dropna(
+            subset=(
+                feature_columns
+                + ["forecast_target_6h"]
+            )
+        )
+        .copy()
     )
 
     print(
-        "🧠 Features:",
-        feature_columns,
+        "\nValid 6-hour targets:",
+        df[
+            "forecast_target_6h"
+        ].notna().sum()
     )
 
-    # -----------------------------------------------------
-    # Safety check
-    # -----------------------------------------------------
+    print(
+        "Usable training rows:",
+        len(model_data)
+    )
 
-    if len(model_data) < 10:
+    if len(model_data) < 20:
 
         raise RuntimeError(
-            "Not enough historical rainfall data "
-            "to train the forecast model. "
-            f"Only {len(model_data)} usable rows are available."
+            "\nNot enough valid training samples.\n"
+            f"Only {len(model_data)} rows available."
         )
 
-    # -----------------------------------------------------
-    # Time-series split
-    # -----------------------------------------------------
+    # --------------------------------------------------------
+    # Chronological split
+    # --------------------------------------------------------
+
+    model_data = (
+        model_data
+        .sort_values(TIME_COL)
+        .reset_index(drop=True)
+    )
 
     split_index = int(
         len(model_data) * 0.80
@@ -199,7 +302,7 @@ def main():
     ]
 
     y_train = train[
-        "target_rainfall_1d"
+        "forecast_target_6h"
     ]
 
     X_test = test[
@@ -207,77 +310,95 @@ def main():
     ]
 
     y_test = test[
-        "target_rainfall_1d"
+        "forecast_target_6h"
     ]
 
     print(
-        "📚 Training samples:",
-        len(train),
+        "\nTraining samples:",
+        len(train)
     )
 
     print(
-        "🧪 Test samples:",
-        len(test),
+        "Testing samples:",
+        len(test)
     )
 
-    # -----------------------------------------------------
-    # Random Forest
-    # -----------------------------------------------------
+    # --------------------------------------------------------
+    # Model
+    # --------------------------------------------------------
 
     model = RandomForestRegressor(
         n_estimators=300,
-        max_depth=18,
+        max_depth=12,
         min_samples_leaf=2,
         random_state=42,
-        n_jobs=-1,
+        n_jobs=-1
     )
 
     print(
-        "\n🧠 Training next-day rainfall "
+        "\nTraining next-6-hour rainfall "
         "forecast model..."
     )
 
     model.fit(
         X_train,
-        y_train,
+        y_train
     )
 
-    # -----------------------------------------------------
-    # Test predictions
-    # -----------------------------------------------------
+    # --------------------------------------------------------
+    # Test prediction
+    # --------------------------------------------------------
 
-    test["predicted_rainfall_1d"] = (
-        model.predict(X_test)
+    test[
+        "predicted_rainfall_6h"
+    ] = model.predict(
+        X_test
     )
 
-    # Rainfall cannot physically be negative.
-
-    test["predicted_rainfall_1d"] = (
-        test["predicted_rainfall_1d"]
+    test[
+        "predicted_rainfall_6h"
+    ] = (
+        test[
+            "predicted_rainfall_6h"
+        ]
         .clip(lower=0)
     )
 
-    # -----------------------------------------------------
+    # --------------------------------------------------------
     # Evaluation
-    # -----------------------------------------------------
+    # --------------------------------------------------------
 
     mae = mean_absolute_error(
         y_test,
-        test["predicted_rainfall_1d"],
+        test[
+            "predicted_rainfall_6h"
+        ]
     )
 
     rmse = mean_squared_error(
         y_test,
-        test["predicted_rainfall_1d"],
+        test[
+            "predicted_rainfall_6h"
+        ]
     ) ** 0.5
 
     r2 = r2_score(
         y_test,
-        test["predicted_rainfall_1d"],
+        test[
+            "predicted_rainfall_6h"
+        ]
     )
 
     print(
-        "\n📈 Rainfall forecast evaluation:"
+        "\n======================================"
+    )
+
+    print(
+        "6-HOUR RAINFALL FORECAST EVALUATION"
+    )
+
+    print(
+        "======================================"
     )
 
     print(
@@ -292,44 +413,22 @@ def main():
         f"R²   : {r2:.3f}"
     )
 
-    # -----------------------------------------------------
-    # Latest test predictions
-    # -----------------------------------------------------
-
-    print(
-        "\n🔎 Latest rainfall test forecasts:"
-    )
-
-    print(
-        test[
-            [
-                DISTRICT_COL,
-                DATE_COL,
-                DAILY_ACTUAL_COL,
-                "target_rainfall_1d",
-                "predicted_rainfall_1d",
-            ]
-        ]
-        .tail(15)
-        .to_string(index=False)
-    )
-
-    # -----------------------------------------------------
+    # --------------------------------------------------------
     # Feature importance
-    # -----------------------------------------------------
-
-    print(
-        "\n🧠 Feature importance:"
-    )
+    # --------------------------------------------------------
 
     importance = pd.DataFrame({
         "feature": feature_columns,
         "importance": (
             model.feature_importances_
-        ),
+        )
     }).sort_values(
-        by="importance",
-        ascending=False,
+        "importance",
+        ascending=False
+    )
+
+    print(
+        "\nFeature importance:"
     )
 
     print(
@@ -338,171 +437,185 @@ def main():
         )
     )
 
-    # -----------------------------------------------------
-    # Operational next-day forecast
-    # -----------------------------------------------------
+    # --------------------------------------------------------
+    # Operational forecast
+    # --------------------------------------------------------
 
     print(
-        "\n🔮 Generating operational next-day forecast..."
+        "\nGenerating operational "
+        "6-hour forecast..."
     )
 
-    # Latest available observation for each district.
-
     latest_rows = (
-        df.sort_values(
-            by=[DISTRICT_COL, DATE_COL]
+        df
+        .sort_values(
+            [STATION_COL, TIME_COL]
         )
         .groupby(
-            DISTRICT_COL,
+            STATION_COL,
             as_index=False
         )
         .tail(1)
         .copy()
     )
 
-    # The latest row does not have a known target because
-    # the next day's rainfall has not happened yet.
-
-    latest_features = latest_rows[
-        feature_columns
-    ].copy()
-
-    operational_predictions = (
-        model.predict(latest_features)
-    )
-
-    operational_predictions = (
-        pd.Series(
-            operational_predictions,
-            index=latest_rows.index,
+    operational_data = (
+        latest_rows
+        .dropna(
+            subset=feature_columns
         )
-        .clip(lower=0)
+        .copy()
     )
 
-    latest_rows["predicted_rainfall_1d"] = (
-        operational_predictions
-    )
+    if len(operational_data) > 0:
 
-    latest_rows["forecast_date"] = (
-        latest_rows[DATE_COL]
-        + pd.Timedelta(days=1)
-    )
+        operational_data[
+            "forecast_rainfall_mm_6h"
+        ] = (
+            model.predict(
+                operational_data[
+                    feature_columns
+                ]
+            )
+        )
 
-    print(
-        "\n🌧️ Operational next-day rainfall forecast:"
-    )
-
-    print(
-        latest_rows[
-            [
-                DISTRICT_COL,
-                DATE_COL,
-                "forecast_date",
-                DAILY_ACTUAL_COL,
-                "predicted_rainfall_1d",
+        operational_data[
+            "forecast_rainfall_mm_6h"
+        ] = (
+            operational_data[
+                "forecast_rainfall_mm_6h"
             ]
-        ]
-        .to_string(index=False)
-    )
+            .clip(lower=0)
+        )
 
-    # -----------------------------------------------------
+        print(
+            "\nOperational forecasts:"
+        )
+
+        print(
+            operational_data[
+                [
+                    STATION_COL,
+                    TIME_COL,
+                    "forecast_rainfall_mm_6h"
+                ]
+            ].to_string(
+                index=False
+            )
+        )
+
+    else:
+
+        operational_data[
+            "forecast_rainfall_mm_6h"
+        ] = np.nan
+
+        print(
+            "No station has enough valid "
+            "current features for forecasting."
+        )
+
+    # --------------------------------------------------------
     # Save model
-    # -----------------------------------------------------
+    # --------------------------------------------------------
 
     MODEL_DIR.mkdir(
         parents=True,
-        exist_ok=True,
+        exist_ok=True
     )
 
     with open(
         MODEL_PATH,
-        "wb",
+        "wb"
     ) as file:
 
         pickle.dump(
             {
                 "model": model,
                 "feature_columns": feature_columns,
+                "target": (
+                    "forecast_rainfall_mm_6h"
+                )
             },
-            file,
+            file
         )
 
-    # -----------------------------------------------------
+    # --------------------------------------------------------
     # Save predictions
-    # -----------------------------------------------------
-
-    # Keep the historical test predictions and append
-    # the operational next-day forecast.
+    # --------------------------------------------------------
 
     historical_predictions = test[
         [
-            DISTRICT_COL,
-            DATE_COL,
-            DAILY_ACTUAL_COL,
-            "target_rainfall_1d",
-            "predicted_rainfall_1d",
+            STATION_COL,
+            TIME_COL,
+            "forecast_target_6h",
+            "predicted_rainfall_6h"
         ]
     ].copy()
 
-    operational_output = latest_rows[
-        [
-            DISTRICT_COL,
-            DATE_COL,
-            DAILY_ACTUAL_COL,
-            "predicted_rainfall_1d",
+    historical_predictions[
+        "prediction_type"
+    ] = "historical_test"
+
+    operational_predictions = (
+        operational_data[
+            [
+                STATION_COL,
+                TIME_COL,
+                "forecast_rainfall_mm_6h"
+            ]
         ]
-    ].copy()
+        .rename(
+            columns={
+                "forecast_rainfall_mm_6h":
+                    "predicted_rainfall_6h"
+            }
+        )
+    )
 
-    operational_output["target_rainfall_1d"] = pd.NA
+    operational_predictions[
+        "forecast_target_6h"
+    ] = np.nan
 
-    operational_output = operational_output[
-        [
-            DISTRICT_COL,
-            DATE_COL,
-            DAILY_ACTUAL_COL,
-            "target_rainfall_1d",
-            "predicted_rainfall_1d",
-        ]
-    ]
+    operational_predictions[
+        "prediction_type"
+    ] = "operational"
 
-    predictions_output = pd.concat(
+    predictions = pd.concat(
         [
             historical_predictions,
-            operational_output,
-        ],
-        ignore_index=True,
-    )
-
-    predictions_output = (
-        predictions_output
-        .drop_duplicates(
-            subset=[
-                DISTRICT_COL,
-                DATE_COL,
-            ],
-            keep="last",
-        )
-        .sort_values(
-            by=[
-                DISTRICT_COL,
-                DATE_COL,
+            operational_predictions[
+                [
+                    STATION_COL,
+                    TIME_COL,
+                    "forecast_target_6h",
+                    "predicted_rainfall_6h",
+                    "prediction_type"
+                ]
             ]
-        )
+        ],
+        ignore_index=True
     )
 
-    predictions_output.to_csv(
+    predictions.to_csv(
         PREDICTION_PATH,
-        index=False,
+        index=False
     )
 
     print(
-        f"\n✅ Forecast model saved: "
-        f"{MODEL_PATH}"
+        f"\nModel saved:"
     )
 
     print(
-        f"✅ Predictions saved: "
-        f"{PREDICTION_PATH}"
+        MODEL_PATH
+    )
+
+    print(
+        f"\nPredictions saved:"
+    )
+
+    print(
+        PREDICTION_PATH
     )
 
 

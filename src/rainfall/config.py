@@ -11,22 +11,21 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 # =========================================================
-# NWDP / IMD RAINFALL API
+# NWDP RAINFALL API
 # =========================================================
 
 RAINFALL_API_URL = (
     "https://nwdp.nwic.gov.in/api/3/action/datastore_search"
 )
 
-# IMD / Rainfall resource
+# NEW HIGH-FREQUENCY RAINFALL RESOURCE
 RAINFALL_RESOURCE_ID = (
-    "8752174f-1d17-4aaf-8058-2eb396f50157"
+    "8b406187-0fee-40b9-8cd9-a249e0ce1903"
 )
 
-# API request timeout in seconds
 RAINFALL_API_TIMEOUT = 120
 
-# Number of records fetched per request
+# Fetch in batches
 RAINFALL_BATCH_SIZE = 1000
 
 
@@ -34,9 +33,11 @@ RAINFALL_BATCH_SIZE = 1000
 # API FILTERS
 # =========================================================
 
-RAINFALL_STATE = "UTTARAKHAND"
+RAINFALL_STATE = "Uttarakhand"
 
-RAINFALL_DISTRICT = "CHAMOLI"
+RAINFALL_DISTRICT = "Chamoli"
+
+RAINFALL_AGENCY = "Uttarakhand"
 
 
 # =========================================================
@@ -49,7 +50,10 @@ REGION_NAME = (
 
 
 # =========================================================
-# SOURCE COLUMN NAMES
+# API SOURCE COLUMNS
+#
+# These will be finalized after inspecting the new
+# high-frequency API response.
 # =========================================================
 
 ID_COLUMN = "_id"
@@ -58,70 +62,63 @@ STATE_COLUMN = "State"
 
 DISTRICT_COLUMN = "District"
 
+AGENCY_COLUMN = "Agency"
+
 DATE_COLUMN = "Date"
 
 
 # =========================================================
-# DAILY RAINFALL
+# RAINFALL FORMULA COMPONENTS
+#
+# Proposed rainfall trigger from the corrected
+# TRINETRA formula sheet:
+#
+# W =
+#   0.35 * 1h intensity
+# + 0.20 * 6h total
+# + 0.15 * 24h total
+# + 0.20 * antecedent rainfall
+# + 0.10 * 6h forecast
+#
+# These are feature names, not assumed API columns.
+# They will be generated during processing.
 # =========================================================
 
-DAILY_ACTUAL_COLUMN = "Daily Actual"
+RAINFALL_1H_COLUMN = "rainfall_mm_1h"
 
-DAILY_NORMAL_COLUMN = "Daily Normal"
+RAINFALL_6H_COLUMN = "rainfall_mm_6h"
 
-DAILY_DEPARTURE_COLUMN = "Daily Departure Per"
+RAINFALL_24H_COLUMN = "rainfall_mm_24h"
 
-DAILY_CATEGORY_COLUMN = "Daily Category"
+ANTECEDENT_15D_COLUMN = "antecedent_rainfall_15d"
 
-
-# =========================================================
-# WEEKLY RAINFALL
-# =========================================================
-
-WEEK_DATE_COLUMN = "Week Date"
-
-WEEKLY_ACTUAL_COLUMN = "Weekly \nActual"
-
-WEEKLY_NORMAL_COLUMN = "Weekly Normal"
-
-WEEKLY_DEPARTURE_COLUMN = "Weekly Departure Per"
-
-WEEKLY_CATEGORY_COLUMN = "Weekly Category"
+FORECAST_6H_COLUMN = "forecast_rainfall_mm_6h"
 
 
 # =========================================================
-# CUMULATIVE RAINFALL
+# OUTPUT
 # =========================================================
 
-CUMULATIVE_DATE_COLUMN = "Cumulative Date"
-
-CUMULATIVE_ACTUAL_COLUMN = "Cumulative Actual"
-
-CUMULATIVE_NORMAL_COLUMN = "Cumulative Normal"
-
-CUMULATIVE_DEPARTURE_COLUMN = (
-    "Cumulative Departue Per"
+RAW_RAINFALL_PATH = (
+    PROJECT_ROOT
+    / "data"
+    / "rainfall"
+    / "raw"
+    / "rainfall_hourly_raw.csv"
 )
 
-CUMULATIVE_CATEGORY_COLUMN = (
-    "Cumulative \nCategory"
+PROCESSED_RAINFALL_PATH = (
+    PROJECT_ROOT
+    / "data"
+    / "rainfall"
+    / "processed"
+    / "rainfall_features.csv"
 )
 
-
-# =========================================================
-# MONTHLY RAINFALL
-# =========================================================
-
-MONTHLY_DATE_COLUMN = "Monthly Date"
-
-MONTHLY_ACTUAL_COLUMN = "Monthly Acutual"
-
-MONTHLY_NORMAL_COLUMN = "Monthly Normal"
-
-MONTHLY_DEPARTURE_COLUMN = (
-    "Monthly \nDeparture Per"
-)
-
-MONTHLY_CATEGORY_COLUMN = (
-    "Monthly Category"
+RAINFALL_RISK_PATH = (
+    PROJECT_ROOT
+    / "data"
+    / "rainfall"
+    / "processed"
+    / "rainfall_risk.csv"
 )

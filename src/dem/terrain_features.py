@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 from rasterio.transform import xy
+from rasterio.warp import transform
 
 
 # ---------------------------------------------------------
@@ -34,10 +35,15 @@ for name, path in files.items():
 
     print(f"Loading {name}...")
 
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Required raster not found: {path}"
+        )
+
     with rasterio.open(path) as src:
 
         rasters[name] = {
-            "data": src.read(1),
+            "data": src.read(1).astype(float),
             "crs": src.crs,
             "transform": src.transform,
             "shape": src.shape,
@@ -80,10 +86,14 @@ for name, raster in rasters.items():
     )
 
     if not same_shape:
-        raise ValueError(f"{name} has different shape.")
+        raise ValueError(
+            f"{name} has different shape."
+        )
 
     if not same_crs:
-        raise ValueError(f"{name} has different CRS.")
+        raise ValueError(
+            f"{name} has different CRS."
+        )
 
 
 # ---------------------------------------------------------
@@ -92,12 +102,14 @@ for name, raster in rasters.items():
 
 print("\nCreating valid-data mask...")
 
-mask = np.ones((height, width), dtype=bool)
+mask = np.ones(
+    (height, width),
+    dtype=bool
+)
 
 for name, raster in rasters.items():
 
     data = raster["data"]
-
     nodata = raster["nodata"]
 
     # Remove NaN / infinite values
@@ -106,6 +118,128 @@ for name, raster in rasters.items():
     # Remove explicit NoData values
     if nodata is not None:
         mask &= data != nodata
+
+
+# ---------------------------------------------------------
+# TERRAIN DERIVATIONS
+# ---------------------------------------------------------
+
+print("\nCalculating terrain derivatives...")
+
+slope = rasters["slope"]["data"]
+flow_accumulation = rasters["flow_accumulation"]["data"]
+elevation = rasters["elevation"]["data"]
+
+
+# ---------------------------------------------------------
+# SLOPE: DEGREES → RADIANS
+# ---------------------------------------------------------
+
+slope_radians = np.deg2rad(slope)
+
+
+# ---------------------------------------------------------
+# TAN(BETA)
+# ---------------------------------------------------------
+
+tan_beta = np.tan(slope_radians)
+
+# Prevent division by zero / numerical instability
+tan_beta = np.maximum(
+    tan_beta,
+    1e-6
+)
+
+
+# ---------------------------------------------------------
+# TWI
+#
+# TWI = ln(a / tan(beta))
+#
+# a = flow accumulation
+# beta = slope angle
+# ---------------------------------------------------------
+
+twi = np.log(
+    (
+        np.maximum(flow_accumulation, 1e-6)
+        / tan_beta
+    )
+)
+
+
+# ---------------------------------------------------------
+# SPI
+#
+# SPI = a * tan(beta)
+# ---------------------------------------------------------
+
+spi = (
+    np.maximum(flow_accumulation, 0)
+    * tan_beta
+)
+
+
+# ---------------------------------------------------------
+# RUGGEDNESS
+#
+# Terrain ruggedness is calculated from the local
+# elevation variation in a 3x3 neighbourhood.
+#
+# This produces a terrain-relief measure in elevation
+# units and is later standardized during risk scoring.
+# ---------------------------------------------------------
+
+padded_elevation = np.pad(
+    elevation,
+    pad_width=1,
+    mode="edge"
+)
+
+neighbourhoods = []
+
+for row_offset in range(3):
+    for col_offset in range(3):
+
+        if row_offset == 1 and col_offset == 1:
+            continue
+
+        neighbourhoods.append(
+            padded_elevation[
+                row_offset:row_offset + height,
+                col_offset:col_offset + width
+            ]
+        )
+
+
+# Mean absolute elevation difference from surrounding cells
+ruggedness = np.zeros_like(
+    elevation,
+    dtype=float
+)
+
+for neighbour in neighbourhoods:
+
+    ruggedness += np.abs(
+        elevation - neighbour
+    )
+
+ruggedness /= len(neighbourhoods)
+
+
+# ---------------------------------------------------------
+# UPDATE VALID MASK
+# ---------------------------------------------------------
+
+derived_features = {
+    "twi": twi,
+    "spi": spi,
+    "ruggedness": ruggedness,
+}
+
+for name, data in derived_features.items():
+
+    mask &= np.isfinite(data)
 
 
 print(f"Valid cells: {mask.sum():,}")
@@ -138,8 +272,6 @@ ys = np.asarray(ys)
 # CONVERT UTM → LAT/LON
 # ---------------------------------------------------------
 
-from rasterio.warp import transform
-
 lon, lat = transform(
     reference["crs"],
     "EPSG:4326",
@@ -168,16 +300,29 @@ df = pd.DataFrame({
 
     "lon": lon,
 
-    "elevation": rasters["elevation"]["data"][rows, cols],
+    "elevation":
+        elevation[rows, cols],
 
-    "slope": rasters["slope"]["data"][rows, cols],
+    "slope":
+        slope[rows, cols],
 
-    "aspect": rasters["aspect"]["data"][rows, cols],
+    "aspect":
+        rasters["aspect"]["data"][rows, cols],
 
-    "curvature": rasters["curvature"]["data"][rows, cols],
+    "curvature":
+        rasters["curvature"]["data"][rows, cols],
 
     "flow_accumulation":
-        rasters["flow_accumulation"]["data"][rows, cols],
+        flow_accumulation[rows, cols],
+
+    "twi":
+        twi[rows, cols],
+
+    "spi":
+        spi[rows, cols],
+
+    "ruggedness":
+        ruggedness[rows, cols],
 })
 
 
@@ -187,7 +332,10 @@ df = pd.DataFrame({
 
 output_file = OUTPUT_PATH / "terrain_features.csv"
 
-df.to_csv(output_file, index=False)
+df.to_csv(
+    output_file,
+    index=False
+)
 
 
 # ---------------------------------------------------------
@@ -204,8 +352,26 @@ print("\nColumns:")
 for column in df.columns:
     print(f" - {column}")
 
+
+print("\nDerived feature statistics:")
+
+for column in [
+    "twi",
+    "spi",
+    "ruggedness",
+]:
+
+    print(
+        f"{column}: "
+        f"min={df[column].min():.4f}, "
+        f"median={df[column].median():.4f}, "
+        f"max={df[column].max():.4f}"
+    )
+
+
 print("\nFirst 5 rows:")
 print(df.head())
+
 
 print("\nSaved to:")
 print(output_file)

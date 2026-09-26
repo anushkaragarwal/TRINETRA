@@ -1,37 +1,66 @@
 import sys
 from pathlib import Path
+import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-RAINFALL_SRC = ROOT / "src" / "rainfall"
 
-sys.path.append(str(RAINFALL_SRC))
+RAINFALL_SRC = (
+    ROOT
+    / "src"
+    / "rainfall"
+)
+
+sys.path.append(
+    str(RAINFALL_SRC)
+)
 
 from imd_api import fetch_rainfall_data
-from processor import validate_data
+
 
 def main():
 
-    print("Fetching rainfall data from NWDP / IMD API...")
-
-    # ---------------------------------------------------------
-    # 1. Fetch data from API
-    # ---------------------------------------------------------
+    print(
+        "🌧️ Fetching HIGH-FREQUENCY rainfall data "
+        "from NWDP..."
+    )
 
     df = fetch_rainfall_data()
 
-    print("Raw shape:", df.shape)
+    print(
+        "\n📊 Raw dataset shape:",
+        df.shape,
+    )
 
-    # ---------------------------------------------------------
-    # 2. Validate API data
-    # ---------------------------------------------------------
+    print(
+        "\n📋 API columns:"
+    )
 
-    print("Validating...")
+    for column in df.columns:
+        print(
+            f"   - {column}"
+        )
 
-    validate_data(df)
+    print(
+        "\n🔎 First 10 records:"
+    )
 
-    # ---------------------------------------------------------
-    # 3. Save raw API response
-    # ---------------------------------------------------------
+    print(
+        df.head(10)
+        .to_string(index=False)
+    )
+
+    print(
+        "\n🔎 Last 10 records:"
+    )
+
+    print(
+        df.tail(10)
+        .to_string(index=False)
+    )
+
+    # -----------------------------------------------------
+    # Save raw API response
+    # -----------------------------------------------------
 
     out_dir = (
         ROOT
@@ -47,7 +76,7 @@ def main():
 
     out_path = (
         out_dir
-        / "rainfall_raw.csv"
+        / "rainfall_hourly_raw.csv"
     )
 
     df.to_csv(
@@ -56,8 +85,15 @@ def main():
     )
 
     print(
-        "Saved raw rainfall data to:",
-        out_path,
+        "\n💾 Saved raw rainfall data to:"
+    )
+
+    print(
+        out_path
+    )
+
+    print(
+        "\n✅ HIGH-FREQUENCY RAINFALL FETCH COMPLETED"
     )
 
 

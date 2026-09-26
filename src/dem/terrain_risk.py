@@ -20,39 +20,169 @@ OUTPUT_PATH = (
 )
 
 
-def percentile_score(series):
+# ---------------------------------------------------------
+# PERCENTILE HELPERS
+# ---------------------------------------------------------
+
+def percentile_thresholds(series):
     """
-    Convert a terrain feature into a relative 0-100
-    percentile score within the MVP AOI.
+    Calculate local terrain percentile thresholds.
     """
-    return (
-        series.rank(
-            method="average",
-            pct=True
-        ) * 100
-    )
+    clean = series.dropna()
+
+    return {
+        "p50": clean.quantile(0.50),
+        "p75": clean.quantile(0.75),
+        "p90": clean.quantile(0.90),
+    }
 
 
-def risk_level(score):
-    if score >= 75:
-        return "HIGH"
-    elif score >= 50:
-        return "MODERATE"
-    elif score >= 25:
+# ---------------------------------------------------------
+# SLOPE SCORE
+#
+# Formula sheet:
+# <15  -> 10
+# <25  -> 40
+# <35  -> 70
+# <45  -> 90
+# >=45 -> 100
+# ---------------------------------------------------------
+
+def score_slope(value):
+
+    if value < 15:
+        return 10
+    elif value < 25:
+        return 40
+    elif value < 35:
+        return 70
+    elif value < 45:
+        return 90
+    else:
+        return 100
+
+
+# ---------------------------------------------------------
+# TWI SCORE
+#
+# Formula sheet specifies corridor-specific thresholds.
+# Since no fixed numeric TWI thresholds are supplied,
+# use local percentile thresholds.
+#
+# p50 -> 15
+# p75 -> 45
+# p90 -> 75
+# >p90 -> 90
+# ---------------------------------------------------------
+
+def score_twi(value, thresholds):
+
+    if value <= thresholds["p50"]:
+        return 15
+    elif value <= thresholds["p75"]:
+        return 45
+    elif value <= thresholds["p90"]:
+        return 75
+    else:
+        return 90
+
+
+# ---------------------------------------------------------
+# SPI SCORE
+#
+# p50 -> 15
+# p75 -> 45
+# p90 -> 75
+# >p90 -> 90
+# ---------------------------------------------------------
+
+def score_spi(value, thresholds):
+
+    if value <= thresholds["p50"]:
+        return 15
+    elif value <= thresholds["p75"]:
+        return 45
+    elif value <= thresholds["p90"]:
+        return 75
+    else:
+        return 90
+
+
+# ---------------------------------------------------------
+# CURVATURE SCORE
+#
+# Formula sheet:
+#
+# curvature < -0.5 -> 80
+# curvature >  0.5 -> 40
+# otherwise        -> 55
+# ---------------------------------------------------------
+
+def score_curvature(value):
+
+    if value < -0.5:
+        return 80
+    elif value > 0.5:
+        return 40
+    else:
+        return 55
+
+
+# ---------------------------------------------------------
+# RUGGEDNESS SCORE
+#
+# p50 -> 15
+# p75 -> 45
+# p90 -> 75
+# >p90 -> 90
+# ---------------------------------------------------------
+
+def score_ruggedness(value, thresholds):
+
+    if value <= thresholds["p50"]:
+        return 15
+    elif value <= thresholds["p75"]:
+        return 45
+    elif value <= thresholds["p90"]:
+        return 75
+    else:
+        return 90
+
+
+# ---------------------------------------------------------
+# COMMON RISK CATEGORY
+# ---------------------------------------------------------
+
+def risk_category(score):
+
+    if score < 30:
         return "LOW"
-    return "VERY LOW"
 
+    elif score < 60:
+        return "MODERATE"
+
+    elif score < 80:
+        return "HIGH"
+
+    else:
+        return "CRITICAL"
+
+
+# ---------------------------------------------------------
+# MAIN
+# ---------------------------------------------------------
 
 def main():
 
-    print("📥 Loading terrain features...")
+    print("Loading terrain features...")
 
     terrain = pd.read_csv(INPUT_PATH)
 
-    print(f"Rows loaded: {len(terrain)}")
+    print(f"Rows loaded: {len(terrain):,}")
 
-    print("\nColumns:")
-    print(terrain.columns.tolist())
+    # -----------------------------------------------------
+    # REQUIRED COLUMNS
+    # -----------------------------------------------------
 
     required_columns = [
         "cell_id",
@@ -63,6 +193,9 @@ def main():
         "aspect",
         "curvature",
         "flow_accumulation",
+        "twi",
+        "spi",
+        "ruggedness",
     ]
 
     missing = [
@@ -77,7 +210,7 @@ def main():
         )
 
     # -----------------------------------------------------
-    # Clean numeric terrain values
+    # CLEAN NUMERIC DATA
     # -----------------------------------------------------
 
     numeric_columns = [
@@ -86,66 +219,127 @@ def main():
         "aspect",
         "curvature",
         "flow_accumulation",
+        "twi",
+        "spi",
+        "ruggedness",
     ]
 
     for column in numeric_columns:
+
         terrain[column] = pd.to_numeric(
             terrain[column],
-            errors="coerce",
+            errors="coerce"
         )
 
     terrain = terrain.dropna(
         subset=numeric_columns
     ).copy()
 
+    print(
+        f"Rows after cleaning: {len(terrain):,}"
+    )
+
     # -----------------------------------------------------
-    # Terrain component scores
+    # LOCAL PERCENTILE THRESHOLDS
     # -----------------------------------------------------
 
-    # Steeper terrain generally represents greater
-    # terrain / landslide susceptibility.
-    terrain["slope_score"] = percentile_score(
+    twi_thresholds = percentile_thresholds(
+        terrain["twi"]
+    )
+
+    spi_thresholds = percentile_thresholds(
+        terrain["spi"]
+    )
+
+    ruggedness_thresholds = percentile_thresholds(
+        terrain["ruggedness"]
+    )
+
+    print("\n========== TERRAIN THRESHOLDS ==========")
+
+    print(
+        "TWI:",
+        twi_thresholds
+    )
+
+    print(
+        "SPI:",
+        spi_thresholds
+    )
+
+    print(
+        "Ruggedness:",
+        ruggedness_thresholds
+    )
+
+    # -----------------------------------------------------
+    # COMPONENT SCORES
+    # -----------------------------------------------------
+
+    terrain["slope_score"] = (
         terrain["slope"]
+        .apply(score_slope)
     )
 
-    # Absolute curvature represents magnitude of
-    # local topographic change.
-    terrain["curvature_score"] = percentile_score(
-        terrain["curvature"].abs()
-    )
-
-    # Log transformation reduces the effect of very
-    # large flow-accumulation values.
-    terrain["flow_accumulation_score"] = percentile_score(
-        np.log1p(
-            terrain["flow_accumulation"]
+    terrain["twi_score"] = terrain["twi"].apply(
+        lambda x: score_twi(
+            x,
+            twi_thresholds
         )
     )
 
-    # Elevation is retained as a terrain descriptor and
-    # given a smaller contribution to the prototype score.
-    terrain["elevation_score"] = percentile_score(
-        terrain["elevation"]
+    terrain["spi_score"] = terrain["spi"].apply(
+        lambda x: score_spi(
+            x,
+            spi_thresholds
+        )
+    )
+
+    terrain["curvature_score"] = (
+        terrain["curvature"]
+        .apply(score_curvature)
+    )
+
+    terrain["ruggedness_score"] = (
+        terrain["ruggedness"]
+        .apply(
+            lambda x: score_ruggedness(
+                x,
+                ruggedness_thresholds
+            )
+        )
     )
 
     # -----------------------------------------------------
-    # Terrain risk score
+    # TERRAIN RISK FORMULA
+    #
+    # T =
+    # 0.35*SLOPE
+    # + 0.20*TWI
+    # + 0.20*SPI
+    # + 0.15*CURVATURE
+    # + 0.10*RUGGEDNESS
     # -----------------------------------------------------
 
     terrain["terrain_risk_score"] = (
-        0.50 * terrain["slope_score"]
-        + 0.20 * terrain["curvature_score"]
-        + 0.20 * terrain["flow_accumulation_score"]
-        + 0.10 * terrain["elevation_score"]
+        0.35 * terrain["slope_score"]
+        + 0.20 * terrain["twi_score"]
+        + 0.20 * terrain["spi_score"]
+        + 0.15 * terrain["curvature_score"]
+        + 0.10 * terrain["ruggedness_score"]
     ).round(2)
+
+    # -----------------------------------------------------
+    # COMMON RISK CATEGORY
+    # -----------------------------------------------------
 
     terrain["terrain_risk_level"] = (
         terrain["terrain_risk_score"]
-        .apply(risk_level)
+        .apply(risk_category)
     )
 
     # -----------------------------------------------------
-    # Save terrain risk layer
+    # OUTPUT
     # -----------------------------------------------------
 
     output_columns = [
@@ -157,10 +351,14 @@ def main():
         "aspect",
         "curvature",
         "flow_accumulation",
+        "twi",
+        "spi",
+        "ruggedness",
         "slope_score",
+        "twi_score",
+        "spi_score",
         "curvature_score",
-        "flow_accumulation_score",
-        "elevation_score",
+        "ruggedness_score",
         "terrain_risk_score",
         "terrain_risk_level",
     ]
@@ -171,19 +369,25 @@ def main():
 
     OUTPUT_PATH.parent.mkdir(
         parents=True,
-        exist_ok=True,
+        exist_ok=True
     )
 
     terrain.to_csv(
         OUTPUT_PATH,
-        index=False,
+        index=False
     )
 
-    print("\n" + "=" * 50)
-    print("TERRAIN RISK COMPLETE")
-    print("=" * 50)
+    # -----------------------------------------------------
+    # VALIDATION
+    # -----------------------------------------------------
 
-    print(f"Rows: {len(terrain)}")
+    print("\n" + "=" * 60)
+    print("TERRAIN RISK COMPLETE")
+    print("=" * 60)
+
+    print(
+        f"Rows: {len(terrain):,}"
+    )
 
     print(
         f"Risk score range: "
@@ -197,8 +401,26 @@ def main():
     print(
         terrain["terrain_risk_level"]
         .value_counts()
+        .sort_index()
         .to_string()
     )
+
+    print("\nComponent score ranges:")
+
+    for column in [
+        "slope_score",
+        "twi_score",
+        "spi_score",
+        "curvature_score",
+        "ruggedness_score",
+    ]:
+
+        print(
+            f"{column}: "
+            f"{terrain[column].min():.2f} "
+            f"to "
+            f"{terrain[column].max():.2f}"
+        )
 
     print("\nSaved:")
     print(OUTPUT_PATH)
