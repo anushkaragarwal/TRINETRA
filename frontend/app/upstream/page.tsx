@@ -485,7 +485,7 @@ if (
                     error ? "text-red-300" : "text-emerald-300"
                   }`}
                 >
-                  {error ? "OFFLINE" : loading ? "CONNECTING" : "LIVE"}
+                  {error ? "OFFLINE" : loading ? "CONNECTING" : "MONITORING"}
                 </span>
               </div>
             </div>
