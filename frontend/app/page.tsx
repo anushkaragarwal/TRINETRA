@@ -173,6 +173,7 @@ export default function Page() {
   const [selectedZone, setSelectedZone] = useState<HazardZone | null>(null);
   const [selectedSettlement, setSelectedSettlement] =
   useState<SettlementRisk | null>(null);
+  const [showHighAlerts, setShowHighAlerts] = useState(false);
   useEffect(() => {
   if (selectedSettlement) {
     console.log("SELECTED SETTLEMENT:", selectedSettlement);
@@ -312,6 +313,14 @@ export default function Page() {
     trinetraData?.components?.satellite_products ?? null;
   const activeAlert = trinetraData?.alert === true;
 
+  const criticalSettlements = settlements.filter(
+  (settlement) => settlement.risk_level === "CRITICAL",
+);
+
+const highSettlements = settlements.filter(
+  (settlement) => settlement.risk_level === "HIGH",
+);
+
   return (
     <main className="min-h-screen bg-[#081016] text-white">
       <div className="flex min-h-screen">
@@ -443,7 +452,7 @@ export default function Page() {
               </button>
 
               <div className="text-right">
-                <p className="text-[10px] text-slate-500">BACKEND STATUS</p>
+                <p className="text-[10px] text-slate-500">SYSTEM STATUS</p>
                 <p className="text-xs text-slate-300">
                   {loading
                     ? "Loading..."
@@ -470,7 +479,7 @@ export default function Page() {
                     error ? "text-red-300" : "text-emerald-300"
                   }`}
                 >
-                  {error ? "OFFLINE" : loading ? "CONNECTING" : "LIVE"}
+                  {error ? "OFFLINE" : loading ? "CONNECTING" : "MONITORING"}
                 </span>
               </div>
             </div>
@@ -789,18 +798,117 @@ export default function Page() {
 
                   <span
                     className={`rounded-full px-2 py-1 text-[10px] ${
-                      activeAlert
+                      criticalSettlements.length > 0
                         ? "bg-red-400/10 text-red-400"
                         : "bg-emerald-400/10 text-emerald-400"
                     }`}
                   >
                     {loading
                       ? "LOADING"
-                      : activeAlert
-                        ? "ALERT"
+                        : criticalSettlements.length > 0
+                        ? `${criticalSettlements.length} ACTIVE ALERT${criticalSettlements.length > 1 ? "S" : ""}`
                         : "NO ACTIVE ALERT"}
                   </span>
                 </div>
+{!loading && criticalSettlements.length > 0 && (
+  <div className="space-y-2 border-b border-[#1c3038] p-3">
+    {criticalSettlements.map((settlement) => (
+      <div
+        key={`critical-alert-${settlement.id || settlement.name}`}
+        className="rounded-md border border-red-400/25 bg-red-400/5 p-3"
+      >
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 shrink-0 rounded-full bg-red-400"></span>
+
+          <span className="text-[11px] font-bold uppercase tracking-wide text-red-400">
+            URGENT ACTION RECOMMENDED
+          </span>
+        </div>
+
+        <button
+          onClick={() => setSelectedSettlement(settlement)}
+          className="mt-2 block text-left text-sm font-semibold text-white hover:text-red-300"
+        >
+          {settlement.name || "Unnamed Settlement"}
+        </button>
+
+        <div className="mt-1 flex items-center justify-between text-[10px]">
+          <span className="text-slate-500">Risk Score</span>
+          <span className="font-medium text-red-300">
+            {formatScore(settlement.risk_score)} / 100
+          </span>
+        </div>
+
+        <div className="mt-1 flex items-center justify-between text-[10px]">
+          <span className="text-slate-500">Population</span>
+          <span className="text-slate-300">
+            {settlement.population ?? "—"}
+          </span>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+{!loading && highSettlements.length > 0 && (
+  <div className="border-b border-[#1c3038] px-3 py-3">
+    <button
+      onClick={() => setShowHighAlerts((current) => !current)}
+      className="flex w-full items-center justify-between rounded-md border border-orange-400/20 bg-orange-400/5 px-3 py-2 text-left transition hover:bg-orange-400/10"
+    >
+      <span className="flex items-center gap-2">
+        <span className="h-2 w-2 rounded-full bg-orange-400"></span>
+
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-orange-400">
+          HIGH-RISK MONITORING
+        </span>
+      </span>
+
+      <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-orange-400/15 px-2 text-[10px] font-bold text-orange-400">
+        {highSettlements.length}
+      </span>
+    </button>
+
+    {showHighAlerts && (
+      <div className="mt-2 space-y-2">
+        {highSettlements.map((settlement) => (
+          <div
+            key={`high-alert-${settlement.id || settlement.name}`}
+            className="rounded-md border border-orange-400/20 bg-orange-400/5 p-3"
+          >
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 shrink-0 rounded-full bg-orange-400"></span>
+
+              <span className="text-[10px] font-bold uppercase tracking-wide text-orange-400">
+                CONSTANT MONITORING RECOMMENDED
+              </span>
+            </div>
+
+            <button
+              onClick={() => setSelectedSettlement(settlement)}
+              className="mt-2 block text-left text-sm font-semibold text-white hover:text-orange-300"
+            >
+              {settlement.name || "Unnamed Settlement"}
+            </button>
+
+            <div className="mt-1 flex items-center justify-between text-[10px]">
+              <span className="text-slate-500">Risk Score</span>
+              <span className="font-medium text-orange-300">
+                {formatScore(settlement.risk_score)} / 100
+              </span>
+            </div>
+
+            <div className="mt-1 flex items-center justify-between text-[10px]">
+              <span className="text-slate-500">Population</span>
+              <span className="text-slate-300">
+                {settlement.population ?? "—"}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+)}
                 {selectedZone && (
   <div className="border-b border-[#1c3038] p-4">
     <div className="mb-3 flex items-center justify-between">
