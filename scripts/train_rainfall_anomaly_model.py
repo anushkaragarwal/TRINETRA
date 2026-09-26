@@ -1,6 +1,7 @@
 from pathlib import Path
 import pickle
 
+import numpy as np
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
@@ -18,15 +19,9 @@ INPUT_PATH = (
 
 MODEL_DIR = ROOT / "models"
 
-MODEL_PATH = (
-    MODEL_DIR
-    / "rainfall_anomaly_model.pkl"
-)
+MODEL_PATH = MODEL_DIR / "rainfall_anomaly_model.pkl"
 
-SCALER_PATH = (
-    MODEL_DIR
-    / "rainfall_anomaly_scaler.pkl"
-)
+SCALER_PATH = MODEL_DIR / "rainfall_anomaly_scaler.pkl"
 
 OUTPUT_PATH = (
     ROOT
@@ -37,19 +32,18 @@ OUTPUT_PATH = (
 )
 
 
-DATE_COL = "Date"
+DATE_COL = "Data Acquisition Time"
+STATION_COL = "Station"
 
-DAILY_ACTUAL_COL = "Daily Actual"
 
-DAILY_NORMAL_COL = "Daily Normal"
+def require_columns(df, columns):
+    missing = [col for col in columns if col not in df.columns]
 
-DAILY_DEPARTURE_COL = "Daily Departure Per"
-
-WEEKLY_ACTUAL_COL = "Weekly  Actual"
-
-WEEKLY_NORMAL_COL = "Weekly Normal"
-
-WEEKLY_DEPARTURE_COL = "Weekly Departure Per"
+    if missing:
+        raise ValueError(
+            "Missing required rainfall columns: "
+            + ", ".join(missing)
+        )
 
 
 def main():
@@ -61,26 +55,74 @@ def main():
         parse_dates=[DATE_COL],
     )
 
+    print(f"📊 Loaded rows: {len(df)}")
+
+    print(
+        "📋 Rainfall dataset columns:"
+    )
+
+    print(
+        df.columns.tolist()
+    )
+
+    require_columns(
+        df,
+        [
+            DATE_COL,
+            STATION_COL,
+            "rainfall_mm_1h",
+            "rainfall_mm_6h",
+            "rainfall_mm_24h",
+            "antecedent_rainfall_mm_15d",
+        ],
+    )
+
+    # -----------------------------------------------------
+    # Sort observations
+    # -----------------------------------------------------
+
     df = df.sort_values(
-        by=["District", DATE_COL]
+        by=[STATION_COL, DATE_COL]
     ).copy()
 
     # -----------------------------------------------------
-    # Create rainfall-derived features
+    # Numeric conversion
+    # -----------------------------------------------------
+
+    rainfall_columns = [
+        "rainfall_mm_1h",
+        "rainfall_mm_6h",
+        "rainfall_mm_24h",
+        "antecedent_rainfall_mm_15d",
+    ]
+
+    for col in rainfall_columns:
+
+        df[col] = pd.to_numeric(
+            df[col],
+            errors="coerce",
+        )
+
+    # -----------------------------------------------------
+    # Create rainfall anomaly features
     # -----------------------------------------------------
 
     print("\n📊 Creating rainfall anomaly features...")
 
-    # Daily rainfall change
+    # Change in 1-hour rainfall between observations.
+    # Calculated separately for each station.
     df["rainfall_change_mm"] = (
-        df.groupby("District")[DAILY_ACTUAL_COL]
+        df.groupby(STATION_COL)["rainfall_mm_1h"]
         .diff()
     )
 
     # Rolling rainfall statistics.
-    # Only current and previous observations are used.
-    df["rainfall_rolling_mean_3d"] = (
-        df.groupby("District")[DAILY_ACTUAL_COL]
+    #
+    # The dataset is irregularly sampled, so these are
+    # observation-window statistics rather than assuming
+    # every row represents exactly one hour.
+    df["rainfall_rolling_mean_3obs"] = (
+        df.groupby(STATION_COL)["rainfall_mm_1h"]
         .transform(
             lambda s: s.rolling(
                 window=3,
@@ -89,8 +131,8 @@ def main():
         )
     )
 
-    df["rainfall_rolling_std_3d"] = (
-        df.groupby("District")[DAILY_ACTUAL_COL]
+    df["rainfall_rolling_std_3obs"] = (
+        df.groupby(STATION_COL)["rainfall_mm_1h"]
         .transform(
             lambda s: s.rolling(
                 window=3,
@@ -100,7 +142,7 @@ def main():
         .fillna(0)
     )
 
-    # Absolute change
+    # Absolute rainfall change
     df["rainfall_change_abs"] = (
         df["rainfall_change_mm"]
         .abs()
@@ -112,25 +154,21 @@ def main():
     # -----------------------------------------------------
 
     feature_columns = [
-        DAILY_ACTUAL_COL,
-        DAILY_NORMAL_COL,
-        DAILY_DEPARTURE_COL,
-
-        WEEKLY_ACTUAL_COL,
-        WEEKLY_NORMAL_COL,
-        WEEKLY_DEPARTURE_COL,
-
+        "rainfall_mm_1h",
+        "rainfall_mm_6h",
+        "rainfall_mm_24h",
+        "antecedent_rainfall_mm_15d",
         "rainfall_change_abs",
-        "rainfall_rolling_mean_3d",
-        "rainfall_rolling_std_3d",
+        "rainfall_rolling_mean_3obs",
+        "rainfall_rolling_std_3obs",
     ]
 
     X = df[feature_columns].copy()
 
-    # Safety against invalid values
+    # Replace invalid values
     X = X.replace(
-        [float("inf"), float("-inf")],
-        0,
+        [np.inf, -np.inf],
+        np.nan,
     )
 
     X = X.fillna(0)
@@ -173,8 +211,8 @@ def main():
     # -1 = anomaly
     #  1 = normal
 
-    df["anomaly_flag"] = (
-        model.predict(X_scaled)
+    df["anomaly_flag"] = model.predict(
+        X_scaled
     )
 
     # Higher = more unusual
@@ -184,10 +222,12 @@ def main():
 
     df["anomaly_label"] = (
         df["anomaly_flag"]
-        .map({
-            -1: "ANOMALY",
-            1: "NORMAL",
-        })
+        .map(
+            {
+                -1: "ANOMALY",
+                1: "NORMAL",
+            }
+        )
     )
 
     # -----------------------------------------------------
@@ -195,8 +235,7 @@ def main():
     # -----------------------------------------------------
 
     anomaly_count = (
-        df["anomaly_label"]
-        == "ANOMALY"
+        df["anomaly_label"] == "ANOMALY"
     ).sum()
 
     print(
@@ -223,12 +262,14 @@ def main():
             ascending=False,
         )[
             [
-                "District",
+                STATION_COL,
                 DATE_COL,
-                DAILY_ACTUAL_COL,
-                DAILY_DEPARTURE_COL,
+                "rainfall_mm_1h",
+                "rainfall_mm_6h",
+                "rainfall_mm_24h",
+                "antecedent_rainfall_mm_15d",
                 "rainfall_change_mm",
-                "rainfall_rolling_mean_3d",
+                "rainfall_rolling_mean_3obs",
                 "anomaly_score",
                 "anomaly_label",
             ]
