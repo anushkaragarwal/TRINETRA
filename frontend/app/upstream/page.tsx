@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+<<<<<<< HEAD
 import Link from "next/link";
 import dynamic from "next/dynamic";
 
@@ -12,6 +13,8 @@ const UpstreamMap = dynamic(() => import("../components/UpstreamMap"), {
     </div>
   ),
 });
+=======
+>>>>>>> origin/main
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -72,7 +75,10 @@ type SatelliteProduct = {
   PublicationDate?: string;
   GeoFootprint?: unknown;
 };
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
 type TrinetraResponse = {
   hazard_score?: number;
   risk_level?: string;
@@ -85,7 +91,10 @@ type TrinetraResponse = {
     satellite_products?: number;
   };
 };
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
 type HazardsResponse = {
   status?: string;
   river?: RiverRecord[];
@@ -133,6 +142,10 @@ const DEFAULT_EVENT_EVIDENCE: EventEvidence = {
     "Combined hydrological and local DEM-derived terrain evidence, with satellite observations retained as supporting post-event evidence.",
 };
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
 function levelColor(level?: string | null) {
   switch (level) {
     case "CRITICAL":
@@ -184,6 +197,19 @@ function formatDate(value?: string | null) {
   });
 }
 
+<<<<<<< HEAD
+=======
+function mapPosition(lat: number, lon: number) {
+  const left = ((lon - 79.4) / 0.35) * 100;
+  const top = (1 - (lat - 30.5) / 0.3) * 100;
+
+  return {
+    left: `${Math.min(96, Math.max(4, left))}%`,
+    top: `${Math.min(92, Math.max(8, top))}%`,
+  };
+}
+
+>>>>>>> origin/main
 function maxScore(records: { score?: number | null }[]) {
   const scores = records
     .map((item) => item.score)
@@ -194,32 +220,49 @@ function maxScore(records: { score?: number | null }[]) {
 
 export default function UpstreamPage() {
   const [data, setData] = useState<HazardsResponse | null>(null);
+<<<<<<< HEAD
   const [trinetraData, setTrinetraData] = useState<TrinetraResponse | null>(
     null,
   );
   const [eventEvidence, setEventEvidence] = useState<EventEvidence | null>(
     DEFAULT_EVENT_EVIDENCE,
   );
+=======
+  const [trinetraData, setTrinetraData] =
+  useState<TrinetraResponse | null>(null);
+  const [eventEvidence, setEventEvidence] = useState<EventEvidence | null>(DEFAULT_EVENT_EVIDENCE);
+>>>>>>> origin/main
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [layer, setLayer] = useState<"SAR" | "HYDRO">("HYDRO");
 
+<<<<<<< HEAD
   const [selectedRiver, setSelectedRiver] = useState<RiverRecord | null>(null);
   const [selectedTerrainPoint, setSelectedTerrainPoint] =
     useState<TerrainRecord | null>(null);
 
+=======
+>>>>>>> origin/main
   const loadData = async (manual = false) => {
     setError("");
     manual ? setRefreshing(true) : setLoading(true);
 
     try {
       const [hazardsResponse, evidenceResponse, trinetraResponse] =
+<<<<<<< HEAD
         await Promise.all([
           fetch(`${API_BASE}/api/hazards`, { cache: "no-store" }),
           fetch(`${API_BASE}/api/event-evidence`, { cache: "no-store" }),
           fetch(`${API_BASE}/api/trinetra`, { cache: "no-store" }),
         ]);
+=======
+  await Promise.all([
+    fetch(`${API_BASE}/api/hazards`, { cache: "no-store" }),
+    fetch(`${API_BASE}/api/event-evidence`, { cache: "no-store" }),
+    fetch(`${API_BASE}/api/trinetra`, { cache: "no-store" }),
+  ]);
+>>>>>>> origin/main
 
       if (!hazardsResponse.ok) {
         throw new Error(`Hazards API returned ${hazardsResponse.status}`);
@@ -228,8 +271,15 @@ export default function UpstreamPage() {
       const result = (await hazardsResponse.json()) as HazardsResponse;
       setData(result);
       if (trinetraResponse.ok) {
+<<<<<<< HEAD
         setTrinetraData((await trinetraResponse.json()) as TrinetraResponse);
       }
+=======
+  setTrinetraData(
+    (await trinetraResponse.json()) as TrinetraResponse,
+  );
+}
+>>>>>>> origin/main
 
       if (evidenceResponse.ok) {
         const evidence = (await evidenceResponse.json()) as {
@@ -251,9 +301,13 @@ export default function UpstreamPage() {
   };
 
   useEffect(() => {
+<<<<<<< HEAD
     void (async () => {
       await loadData();
     })();
+=======
+    loadData();
+>>>>>>> origin/main
   }, []);
 
   const rivers = data?.river ?? [];
@@ -262,6 +316,7 @@ export default function UpstreamPage() {
   const satellites = data?.satellite ?? [];
 
   const latestRiver = rivers[0] ?? {
+<<<<<<< HEAD
     Station: eventEvidence?.station,
     hybrid_hazard_score: eventEvidence?.hydrological_risk_score,
     hybrid_risk_category:
@@ -273,6 +328,19 @@ export default function UpstreamPage() {
   const latestRainfall = rainfall[0];
 
   const latestTerrain = terrain[0];
+=======
+  Station: eventEvidence?.station,
+  hybrid_hazard_score: eventEvidence?.hydrological_risk_score,
+  hybrid_risk_category:
+    (eventEvidence?.hydrological_risk_score ?? 0) >= 90
+      ? "CRITICAL"
+      : "Available",
+};
+
+const latestRainfall = rainfall[0];
+
+const latestTerrain = terrain[0];
+>>>>>>> origin/main
 
   const riverScore = maxScore(
     rivers.map((item) => ({ score: item.hybrid_hazard_score })),
@@ -285,6 +353,7 @@ export default function UpstreamPage() {
     terrain.map((item) => ({ score: item.terrain_hazard_score })),
   );
   const displayRiverScore =
+<<<<<<< HEAD
     trinetraData?.components?.river_score ?? riverScore;
 
   const displayRainfallScore =
@@ -329,6 +398,50 @@ export default function UpstreamPage() {
           : "Available",
     });
   }
+=======
+  trinetraData?.components?.river_score ?? riverScore;
+
+const displayRainfallScore =
+  trinetraData?.components?.rainfall_score ?? rainfallScore;
+
+const displayTerrainScore =
+  trinetraData?.components?.terrain_score ?? terrainScore;
+
+  const activeSignals = useMemo(() => {
+  let count = 0;
+
+  if ((displayRiverScore ?? 0) >= 75) count += 1;
+  if ((displayRainfallScore ?? 0) >= 75) count += 1;
+  if ((displayTerrainScore ?? 0) >= 75) count += 1;
+
+  return count;
+}, [displayRiverScore, displayRainfallScore, displayTerrainScore]);
+
+  const riverMapPoints = rivers
+  .filter(
+    (item) =>
+      typeof item.Latitude === "number" &&
+      typeof item.Longitude === "number",
+  )
+  .slice(0, 20);
+
+if (
+  riverMapPoints.length === 0 &&
+  typeof eventEvidence?.latitude === "number" &&
+  typeof eventEvidence?.longitude === "number"
+) {
+  riverMapPoints.push({
+    Station: eventEvidence.station,
+    Latitude: eventEvidence.latitude,
+    Longitude: eventEvidence.longitude,
+    hybrid_hazard_score: eventEvidence.hydrological_risk_score,
+    hybrid_risk_category:
+      (eventEvidence.hydrological_risk_score ?? 0) >= 90
+        ? "CRITICAL"
+        : "Available",
+  });
+}
+>>>>>>> origin/main
 
   const terrainMapPoints = terrain
     .filter(
@@ -371,45 +484,77 @@ export default function UpstreamPage() {
           </p>
 
           <nav className="space-y-1">
+<<<<<<< HEAD
             <Link
+=======
+            <a
+>>>>>>> origin/main
               href="/"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>⌂</span>
               Command Center
+<<<<<<< HEAD
             </Link>
 
             <Link
+=======
+            </a>
+
+            <a
+>>>>>>> origin/main
               href="/upstream"
               className="flex items-center gap-3 rounded-md border border-cyan-400/20 bg-cyan-400/10 px-3 py-2.5 text-sm text-cyan-300"
             >
               <span>◈</span>
               Upstream Intelligence
+<<<<<<< HEAD
             </Link>
 
             <Link
+=======
+            </a>
+
+            <a
+>>>>>>> origin/main
               href="/risk"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>◆</span>
               Risk Intelligence
+<<<<<<< HEAD
             </Link>
 
             <Link
+=======
+            </a>
+
+            <a
+>>>>>>> origin/main
               href="/safe-sites"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>⌂</span>
               Safe Sites
+<<<<<<< HEAD
             </Link>
 
             <Link
+=======
+            </a>
+
+            <a
+>>>>>>> origin/main
               href="/relocation"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>⇄</span>
               Relocation
+<<<<<<< HEAD
             </Link>
+=======
+            </a>
+>>>>>>> origin/main
           </nav>
 
           <p className="mb-3 mt-8 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">
@@ -417,13 +562,21 @@ export default function UpstreamPage() {
           </p>
 
           <nav>
+<<<<<<< HEAD
             <Link
+=======
+            <a
+>>>>>>> origin/main
               href="/data-sources"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>▣</span>
               Data Sources
+<<<<<<< HEAD
             </Link>
+=======
+            </a>
+>>>>>>> origin/main
           </nav>
 
           <div className="mt-auto pt-12">
@@ -474,7 +627,13 @@ export default function UpstreamPage() {
 
               <div className="text-right">
                 <p className="text-[10px] text-slate-500">LAST DATA LOAD</p>
+<<<<<<< HEAD
                 <p className="text-xs text-slate-300">10 Sept 2026, 03:00</p>
+=======
+                <p className="text-xs text-slate-300">
+10 Sept 2026, 03:00
+                </p>
+>>>>>>> origin/main
               </div>
 
               <div
@@ -549,9 +708,13 @@ export default function UpstreamPage() {
                   )}`}
                 >
                   {latestRiver?.hybrid_risk_category ||
+<<<<<<< HEAD
                     ((displayRiverScore ?? 0) >= 90
                       ? "CRITICAL"
                       : "Available")}
+=======
+  ((displayRiverScore ?? 0) >= 90 ? "CRITICAL" : "Available")}
+>>>>>>> origin/main
                 </p>
               </div>
 
@@ -600,6 +763,10 @@ export default function UpstreamPage() {
                     >
                       SAR CATALOGUE
                     </button>
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
                     <button
                       onClick={() => setLayer("HYDRO")}
                       className={`rounded border px-3 py-1.5 text-[10px] ${
@@ -614,6 +781,7 @@ export default function UpstreamPage() {
                 </div>
 
                 <div className="relative h-[355px] overflow-hidden bg-[#101d20]">
+<<<<<<< HEAD
                   {layer === "HYDRO" ? (
                     <UpstreamMap
                       riverPoints={riverMapPoints}
@@ -641,6 +809,42 @@ export default function UpstreamPage() {
                   )}
 
                   <div className="absolute left-5 top-5 z-[999] rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2">
+=======
+                  <div
+                    className="absolute inset-0 opacity-20"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(#55727a 1px, transparent 1px), linear-gradient(90deg, #55727a 1px, transparent 1px)",
+                      backgroundSize: "40px 40px",
+                    }}
+                  />
+
+                  <svg
+                    className="absolute inset-0 h-full w-full opacity-30"
+                    viewBox="0 0 900 355"
+                    preserveAspectRatio="none"
+                  >
+                    <path
+                      d="M0 280 L100 210 L170 245 L250 110 L330 180 L410 70 L490 150 L570 55 L650 140 L730 80 L810 175 L900 100 L900 355 L0 355 Z"
+                      fill="#18292c"
+                    />
+                    <path
+                      d="M0 280 L100 210 L170 245 L250 110 L330 180 L410 70 L490 150 L570 55 L650 140 L730 80 L810 175 L900 100"
+                      fill="none"
+                      stroke="#4a6469"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M580 0 C540 65 620 90 570 145 C520 200 590 230 530 275 C480 315 500 340 460 355"
+                      fill="none"
+                      stroke="#22d3ee"
+                      strokeWidth="4"
+                      opacity="0.65"
+                    />
+                  </svg>
+
+                  <div className="absolute left-5 top-5 rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2">
+>>>>>>> origin/main
                     <p className="text-[9px] text-slate-600">STUDY AREA</p>
                     <p className="mt-1 text-[10px] text-slate-300">
                       30.50–30.80° N
@@ -650,7 +854,11 @@ export default function UpstreamPage() {
                     </p>
                   </div>
 
+<<<<<<< HEAD
                   <div className="absolute right-5 top-5 z-[999] rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2 text-right">
+=======
+                  <div className="absolute right-5 top-5 rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2 text-right">
+>>>>>>> origin/main
                     <p className="text-[9px] text-slate-600">LAYER</p>
                     <p className="mt-1 text-[10px] text-cyan-300">
                       {layer === "SAR"
@@ -659,7 +867,78 @@ export default function UpstreamPage() {
                     </p>
                   </div>
 
+<<<<<<< HEAD
                   <div className="absolute bottom-5 left-5 z-[999] rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2">
+=======
+                  {layer === "HYDRO" &&
+                    riverMapPoints.map((river, index) => {
+                      const position = mapPosition(
+                        river.Latitude!,
+                        river.Longitude!,
+                      );
+                      const level =
+                        river.hybrid_risk_category || river.risk_category;
+
+                      return (
+                        <div
+                          key={`river-${index}`}
+                          className="absolute"
+                          style={position}
+                          title={`${river.Station || "River station"} · ${scoreOf(
+                            river.hybrid_hazard_score,
+                          )} · ${level || "—"}`}
+                        >
+                          <div className="relative -translate-x-1/2 -translate-y-1/2">
+                            <div
+                              className={`h-3 w-3 rounded-full border border-white/60 ${levelBg(
+                                level,
+                              )} shadow-[0_0_12px_rgba(34,211,238,0.3)]`}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                  {layer === "HYDRO" &&
+                    terrainMapPoints.map((point, index) => {
+                      const position = mapPosition(point.lat!, point.lon!);
+
+                      return (
+                        <div
+                          key={`terrain-${point.cell_id || index}`}
+                          className="absolute"
+                          style={position}
+                          title={`Terrain · ${scoreOf(
+                            point.terrain_hazard_score,
+                          )} · ${point.terrain_hazard_level || "—"}`}
+                        >
+                          <div className="relative -translate-x-1/2 -translate-y-1/2">
+                            <div className="h-2 w-2 rounded-full border border-white/30 bg-yellow-300/80" />
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                  {layer === "SAR" && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="max-w-sm rounded-md border border-cyan-400/20 bg-[#081016]/90 p-5 text-center">
+                        <p className="text-xs font-medium text-cyan-300">
+                          SENTINEL-1 SAR CATALOGUE
+                        </p>
+                        <p className="mt-2 text-[10px] leading-4 text-slate-500">
+                          {satellites.length} Sentinel-1 products were returned
+                          by the Copernicus catalogue for the configured
+                          study area and recent search window.
+                        </p>
+                        <p className="mt-3 text-[10px] text-slate-600">
+                          Catalogue metadata is shown below.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="absolute bottom-5 left-5 rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2">
+>>>>>>> origin/main
                     <p className="text-[9px] text-slate-600">CURRENT LAYER</p>
                     <p className="mt-1 text-[10px] text-cyan-300">
                       {layer === "SAR"
@@ -763,6 +1042,7 @@ export default function UpstreamPage() {
                     </p>
                   </div>
                 </div>
+<<<<<<< HEAD
 
                 {(selectedRiver || selectedTerrainPoint) && (
                   <div className="border-t border-[#1c3038] p-4">
@@ -862,6 +1142,161 @@ export default function UpstreamPage() {
 
             {/* EVENT / SATELLITE EVIDENCE */}
             <div className="mt-5 rounded-lg border border-[#1c3038] bg-[#0d1920] p-5">
+=======
+              </div>
+            </div>
+
+            {/* HYDROLOGY DETAIL
+            <div className="mt-5 grid grid-cols-2 gap-5">
+              <div className="rounded-lg border border-[#1c3038] bg-[#0d1920] p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium">Latest River Signal</h3>
+                    <p className="mt-1 text-[10px] text-slate-500">
+                      Returned CWC hydrology observation
+                    </p>
+                  </div>
+
+                  <span
+                    className={`text-[10px] font-medium ${levelColor(
+                      latestRiver?.hybrid_risk_category ||
+                        latestRiver?.risk_category,
+                    )}`}
+                  >
+                    {latestRiver?.hybrid_risk_category ||
+                      latestRiver?.risk_category ||
+                      "—"}
+                  </span>
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[9px] uppercase text-slate-600">
+                      Station
+                    </p>
+                    <p className="mt-1 text-xs text-slate-200">
+                      {latestRiver?.Station || "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[9px] uppercase text-slate-600">
+                      Discharge
+                    </p>
+                    <p className="mt-1 text-xs text-slate-200">
+                      {typeof latestRiver?.[
+                        "Telemetry Hourly River Water Discharge (m3/sec)"
+                      ] === "number"
+                        ? `${latestRiver["Telemetry Hourly River Water Discharge (m3/sec)"].toFixed(
+                            2,
+                          )} m³/s`
+                        : "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[9px] uppercase text-slate-600">
+                      Change
+                    </p>
+                    <p className="mt-1 text-xs text-slate-200">
+                      {typeof latestRiver?.discharge_change_m3s === "number"
+                        ? `${latestRiver.discharge_change_m3s >= 0 ? "+" : ""}${latestRiver.discharge_change_m3s.toFixed(
+                            2,
+                          )} m³/s`
+                        : "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[9px] uppercase text-slate-600">
+                      Rate of change
+                    </p>
+                    <p className="mt-1 text-xs text-slate-200">
+                      {typeof latestRiver?.discharge_rate_m3s_per_hour ===
+                      "number"
+                        ? `${latestRiver.discharge_rate_m3s_per_hour >= 0 ? "+" : ""}${latestRiver.discharge_rate_m3s_per_hour.toFixed(
+                            2,
+                          )} m³/s/hr`
+                        : "—"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-[#1c3038] bg-[#0d1920] p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium">
+                      Latest Rainfall Signal
+                    </h3>
+                    <p className="mt-1 text-[10px] text-slate-500">
+                      Event-date rainfall unavailable; latest pipeline score shown above
+                    </p>
+                  </div>
+
+                  <span
+                    className={`text-[10px] font-medium ${levelColor(
+                      latestRainfall?.hazard_category ||
+                        latestRainfall?.risk_category,
+                    )}`}
+                  >
+                    {latestRainfall?.hazard_category ||
+                      latestRainfall?.risk_category ||
+                      "—"}
+                  </span>
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[9px] uppercase text-slate-600">
+                      District
+                    </p>
+                    <p className="mt-1 text-xs text-slate-200">
+                      {latestRainfall?.District || "Chamoli"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[9px] uppercase text-slate-600">
+                      Daily actual
+                    </p>
+                    <p className="mt-1 text-xs text-slate-200">
+                      {typeof latestRainfall?.["Daily Actual"] === "number"
+  ? `${latestRainfall["Daily Actual"].toFixed(1)} mm`
+  : "No event-date observation"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[9px] uppercase text-slate-600">
+                      Daily normal
+                    </p>
+                    <p className="mt-1 text-xs text-slate-200">
+                      {typeof latestRainfall?.["Daily Normal"] === "number"
+  ? `${latestRainfall["Daily Normal"].toFixed(1)} mm`
+  : "Not available"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[9px] uppercase text-slate-600">
+                      Departure
+                    </p>
+                    <p className="mt-1 text-xs text-slate-200">
+                      {latestRainfall?.["Daily Departure Per"] !== undefined &&
+latestRainfall?.["Daily Departure Per"] !== null
+  ? `${latestRainfall["Daily Departure Per"]}%`
+  : "Not available"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div> */}
+
+            {/* EVENT / SATELLITE EVIDENCE */}
+            <div className="mt-5 rounded-lg border border-[#1c3038] bg-[#0d1920] p-5">
+
+>>>>>>> origin/main
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[9px] uppercase tracking-wider text-slate-600">
@@ -873,9 +1308,14 @@ export default function UpstreamPage() {
                   </h3>
 
                   <p className="mt-1 text-[10px] leading-4 text-slate-500">
+<<<<<<< HEAD
                     Supporting satellite evidence from the TRINETRA event
                     analysis dataset. It is not presented as an independent
                     flood confirmation.
+=======
+                    Supporting satellite evidence from the TRINETRA event analysis dataset.
+                    It is not presented as an independent flood confirmation.
+>>>>>>> origin/main
                   </p>
                 </div>
 
@@ -885,15 +1325,26 @@ export default function UpstreamPage() {
                   </p>
 
                   <p className="mt-1 text-xs text-slate-300">
+<<<<<<< HEAD
                     {eventEvidence?.event_time
                       ? formatDate(eventEvidence.event_time)
                       : "—"}
+=======
+                    {eventEvidence?.event_time ? formatDate(eventEvidence.event_time) : "—"}
+>>>>>>> origin/main
                   </p>
                 </div>
               </div>
 
+<<<<<<< HEAD
               {/* TWO SATELLITE ANALYSIS IMAGES */}
               <div className="mt-5 grid grid-cols-2 gap-4">
+=======
+
+              {/* TWO SATELLITE ANALYSIS IMAGES */}
+              <div className="mt-5 grid grid-cols-2 gap-4">
+
+>>>>>>> origin/main
                 {/* SENTINEL-2 */}
                 <div>
                   <div className="mb-2 flex items-center justify-between">
@@ -909,12 +1360,20 @@ export default function UpstreamPage() {
                   <div className="overflow-hidden rounded-md border border-[#1c3038] bg-[#101d20]">
                     <img
                       src="/satellite/lambagarh_sentinel2_optical.png"
+<<<<<<< HEAD
                       alt={sentinelImageAlt}
+=======
+                      alt="Sentinel-2 Optical Evidence — Lambagarh Event"
+>>>>>>> origin/main
                       className="block h-auto w-full"
                     />
                   </div>
                 </div>
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/main
                 {/* SENTINEL-1 */}
                 <div>
                   <div className="mb-2 flex items-center justify-between">
@@ -930,15 +1389,29 @@ export default function UpstreamPage() {
                   <div className="overflow-hidden rounded-md border border-[#1c3038] bg-[#101d20]">
                     <img
                       src="/satellite/lambagarh_sentinel1_sar.png"
+<<<<<<< HEAD
                       alt={sentinelImageAlt}
+=======
+                      alt="Sentinel-1 SAR Analysis — Lambagarh Event"
+>>>>>>> origin/main
                       className="block h-auto w-full"
                     />
                   </div>
                 </div>
+<<<<<<< HEAD
               </div>
 
               {/* THIRD IMAGE — EVIDENCE RESULT */}
               <div className="mt-5">
+=======
+
+              </div>
+
+
+              {/* THIRD IMAGE — REPLACES EVIDENCE SUMMARY */}
+              <div className="mt-5">
+
+>>>>>>> origin/main
                 <div className="mb-2 flex items-center justify-between">
                   <h4 className="text-base font-medium text-slate-300">
                     Satellite Evidence Result
@@ -952,6 +1425,7 @@ export default function UpstreamPage() {
                 <div className="overflow-hidden rounded-md border border-[#1c3038] bg-[#101d20]">
                   <img
                     src="/satellite/lambagarh_satellite_evidence_result.png"
+<<<<<<< HEAD
                     alt={sentinelImageAlt}
                     className="block h-auto w-full"
                   />
@@ -959,6 +1433,123 @@ export default function UpstreamPage() {
               </div>
             </div>
 
+=======
+                    alt="Satellite Evidence Result — Lambagarh Event"
+                    className="block h-auto w-full"
+                  />
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* EVENT / SATELLITE EVIDENCE */}
+            {/* <div className="mt-5 rounded-lg border border-[#1c3038] bg-[#0d1920] p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[9px] uppercase tracking-wider text-slate-600">
+                    Event / Post-event Evidence
+                  </p>
+                  <h3 className="mt-1 text-sm font-medium">Satellite Analysis Details</h3>
+                  <p className="mt-1 text-[10px] leading-4 text-slate-500">
+                    Supporting satellite evidence from the TRINETRA event analysis dataset.
+                    It is not presented as an independent flood confirmation.
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] uppercase text-slate-600">Event</p>
+                  <p className="mt-1 text-xs text-slate-300">
+                    {eventEvidence?.event_time ? formatDate(eventEvidence.event_time) : "—"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid grid-cols-2 gap-4">
+                <div className="rounded-md border border-[#1c3038] bg-[#0a151b] p-4">
+                  <p className="text-xs font-medium text-slate-200">Sentinel-2 Optical Evidence</p>
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-[9px] uppercase text-slate-600">Candidate New Water</p>
+                      <p className="mt-1 text-lg font-semibold text-slate-100">
+                        {typeof eventEvidence?.sentinel2_candidate_new_water_ha === "number" ? `${eventEvidence.sentinel2_candidate_new_water_ha.toFixed(2)} ha` : "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase text-slate-600">Net Water-Area Change</p>
+                      <p className="mt-1 text-lg font-semibold text-slate-100">
+                        {typeof eventEvidence?.sentinel2_net_water_change_ha === "number" ? `${eventEvidence.sentinel2_net_water_change_ha.toFixed(2)} ha` : "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-4 text-[10px] leading-4 text-slate-600">
+                    Cloud-masked optical imagery with MNDWI-based candidate water mapping.
+                  </p>
+                </div>
+
+                <div className="rounded-md border border-[#1c3038] bg-[#0a151b] p-4">
+                  <p className="text-xs font-medium text-slate-200">Sentinel-1 SAR Evidence</p>
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-[9px] uppercase text-slate-600">Mean VV Backscatter Change</p>
+                      <p className="mt-1 text-lg font-semibold text-slate-100">
+                        {typeof eventEvidence?.sentinel1_mean_vv_change_db === "number" ? `${eventEvidence.sentinel1_mean_vv_change_db >= 0 ? "+" : ""}${eventEvidence.sentinel1_mean_vv_change_db.toFixed(2)} dB` : "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase text-slate-600">Candidate New SAR Water</p>
+                      <p className="mt-1 text-lg font-semibold text-slate-100">
+                        {typeof eventEvidence?.sentinel1_candidate_new_water_ha === "number" ? `${eventEvidence.sentinel1_candidate_new_water_ha.toFixed(4)} ha` : "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-4 text-[10px] leading-4 text-slate-600">
+                    Sentinel-1 ascending-orbit VV before/after comparison; less affected by cloud cover.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid grid-cols-2 gap-4">
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <h4 className="text-xs font-medium text-slate-300">Sentinel-1 SAR Analysis</h4>
+                    <span className="text-[9px] text-slate-600">EVENT OUTPUT</span>
+                  </div>
+                  <div className="overflow-hidden rounded-md border border-[#1c3038] bg-[#101d20]">
+                    <img
+                      src="/satellite/sentinel1_sar_analysis.png"
+                      alt="Sentinel-1 SAR analysis"
+                      className="block h-auto w-full"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <h4 className="text-xs font-medium text-slate-300">Sentinel-2 Optical Analysis</h4>
+                    <span className="text-[9px] text-slate-600">EVENT OUTPUT</span>
+                  </div>
+                  <div className="overflow-hidden rounded-md border border-[#1c3038] bg-[#101d20]">
+                    <img
+                      src="/satellite/sentinel2_optical_analysis.png"
+                      alt="Sentinel-2 Optical analysis"
+                      className="block h-auto w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-md border border-cyan-400/10 bg-cyan-400/5 p-4">
+                <p className="text-[9px] uppercase tracking-wider text-cyan-300">Evidence Summary</p>
+                <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 text-xs">
+                  <div><span className="text-slate-500">TRINETRA combined hazard:</span> <span className="text-slate-200">{scoreOf(eventEvidence?.trinetra_hazard_score)} / 100</span></div>
+                  <div><span className="text-slate-500">Hydrological risk:</span> <span className="text-slate-200">{scoreOf(eventEvidence?.hydrological_risk_score)} / 100</span></div>
+                  <div><span className="text-slate-500">DEM terrain hazard:</span> <span className="text-slate-200">{scoreOf(eventEvidence?.terrain_hazard_score)} / 100</span></div>
+                  <div><span className="text-slate-500">Satellite evidence score:</span> <span className="text-slate-200">{scoreOf(eventEvidence?.satellite_evidence_score)} / 100</span></div>
+                  <div className="col-span-2"><span className="text-slate-500">Interpretation:</span> <span className="text-slate-300">{eventEvidence?.system_interpretation || eventEvidence?.satellite_status || "Supporting evidence should be cross-checked with hydrology and terrain."}</span></div>
+                </div>
+              </div>
+            </div> */}
+
+>>>>>>> origin/main
             {/* SENTINEL TABLE */}
             <div className="mt-5 rounded-lg border border-[#1c3038] bg-[#0d1920]">
               <div className="flex items-center justify-between border-b border-[#1c3038] px-4 py-3">
@@ -1071,8 +1662,12 @@ export default function UpstreamPage() {
                 TRINETRA · Upstream Intelligence
               </p>
               <p className="text-[9px] text-slate-600">
+<<<<<<< HEAD
                 Live feeds from /api/hazards · Event evidence from
                 /api/event-evidence
+=======
+                Live feeds from /api/hazards · Event evidence from /api/event-evidence
+>>>>>>> origin/main
               </p>
             </div>
           </div>
@@ -1080,4 +1675,8 @@ export default function UpstreamPage() {
       </div>
     </main>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/main

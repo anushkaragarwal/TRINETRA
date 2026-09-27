@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+<<<<<<< HEAD
 import Link from "next/link";
 import dynamic from "next/dynamic";
 
@@ -12,6 +13,8 @@ const RiskMap = dynamic(() => import("../components/RiskMap"), {
     </div>
   ),
 });
+=======
+>>>>>>> origin/main
 
 const API_BASE = "http://127.0.0.1:8000";
 
@@ -173,6 +176,19 @@ function unwrapSettlements(response: SettlementsResponse): Settlement[] {
   return [];
 }
 
+<<<<<<< HEAD
+=======
+function mapPosition(lat: number, lon: number) {
+  const left = ((lon - 79.4) / 0.35) * 100;
+  const top = (1 - (lat - 30.5) / 0.3) * 100;
+
+  return {
+    left: `${Math.min(96, Math.max(4, left))}%`,
+    top: `${Math.min(90, Math.max(8, top))}%`,
+  };
+}
+
+>>>>>>> origin/main
 function settlementName(settlement: Settlement) {
   return settlement.name || settlement.settlement_name || "Unnamed settlement";
 }
@@ -246,8 +262,11 @@ export default function RiskPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+<<<<<<< HEAD
   const [selectedSettlement, setSelectedSettlement] =
     useState<Settlement | null>(null);
+=======
+>>>>>>> origin/main
 
   const loadData = async (manual = false) => {
     setError("");
@@ -304,15 +323,20 @@ export default function RiskPage() {
   };
 
   useEffect(() => {
+<<<<<<< HEAD
     void (async () => {
       await loadData();
     })();
+=======
+    loadData();
+>>>>>>> origin/main
   }, []);
 
   const riverRecords = hazards?.river ?? [];
   const rainfallRecords = hazards?.rainfall ?? [];
   const terrainRecords = hazards?.terrain ?? [];
 
+<<<<<<< HEAD
   const riskScore = (() => {
     if (typeof risk?.hazard_score === "number") {
       return risk.hazard_score;
@@ -348,6 +372,10 @@ export default function RiskPage() {
           : riskScore >= 30
             ? "MODERATE"
             : "LOW");
+=======
+  const riskScore = 55.0;
+  const riskLevel: RiskLevel = "MODERATE";
+>>>>>>> origin/main
 
   const rainfallScore = firstNumber(risk?.components?.rainfall_score);
   const riverScore = firstNumber(risk?.components?.river_score);
@@ -404,6 +432,7 @@ export default function RiskPage() {
     )
     .slice(0, 30);
 
+<<<<<<< HEAD
   const riskMapPoints = mappedSettlements.map(({ settlement, lat, lon }) => ({
     settlement,
     lat,
@@ -413,11 +442,18 @@ export default function RiskPage() {
     name: settlementName(settlement),
   }));
 
+=======
+>>>>>>> origin/main
   const riskMapAvailable = mappedSettlements.length > 0;
 
   const riverCount = riverRecords.length;
   const rainfallCount = rainfallRecords.length;
   const terrainCount = terrainRecords.length;
+<<<<<<< HEAD
+=======
+  const totalHazardRecords = riverCount + rainfallCount + terrainCount;
+
+>>>>>>> origin/main
   const factorRows = [
     {
       name: "Rainfall",
@@ -464,45 +500,77 @@ export default function RiskPage() {
           </p>
 
           <nav className="space-y-1">
+<<<<<<< HEAD
             <Link
+=======
+            <a
+>>>>>>> origin/main
               href="/"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>⌂</span>
               Command Center
+<<<<<<< HEAD
             </Link>
 
             <Link
+=======
+            </a>
+
+            <a
+>>>>>>> origin/main
               href="/upstream"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>◈</span>
               Upstream Intelligence
+<<<<<<< HEAD
             </Link>
 
             <Link
+=======
+            </a>
+
+            <a
+>>>>>>> origin/main
               href="/risk"
               className="flex items-center gap-3 rounded-md border border-cyan-400/20 bg-cyan-400/10 px-3 py-2.5 text-sm text-cyan-300"
             >
               <span>◆</span>
               Risk Intelligence
+<<<<<<< HEAD
             </Link>
 
             <Link
+=======
+            </a>
+
+            <a
+>>>>>>> origin/main
               href="/safe-sites"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>⌂</span>
               Safe Sites
+<<<<<<< HEAD
             </Link>
 
             <Link
+=======
+            </a>
+
+            <a
+>>>>>>> origin/main
               href="/relocation"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>⇄</span>
               Relocation
+<<<<<<< HEAD
             </Link>
+=======
+            </a>
+>>>>>>> origin/main
           </nav>
 
           <p className="mb-3 mt-8 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">
@@ -510,13 +578,21 @@ export default function RiskPage() {
           </p>
 
           <nav>
+<<<<<<< HEAD
             <Link
+=======
+            <a
+>>>>>>> origin/main
               href="/data-sources"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>▣</span>
               Data Sources
+<<<<<<< HEAD
             </Link>
+=======
+            </a>
+>>>>>>> origin/main
           </nav>
 
           <div className="mt-auto pt-12">
@@ -709,11 +785,100 @@ export default function RiskPage() {
                 </div>
 
                 <div className="relative h-[355px] overflow-hidden bg-[#0a191f]">
+<<<<<<< HEAD
                   {riskMapAvailable ? (
                     <RiskMap
                       points={riskMapPoints}
                       onPointClick={setSelectedSettlement}
                     />
+=======
+                  <div
+                    className="absolute inset-0 opacity-20"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(#55727a 1px, transparent 1px), linear-gradient(90deg, #55727a 1px, transparent 1px)",
+                      backgroundSize: "42px 42px",
+                    }}
+                  />
+
+                  <div className="absolute left-5 top-5 rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2">
+                    <p className="text-[9px] text-slate-500">STUDY AREA</p>
+                    <p className="mt-1 text-[10px] text-slate-300">
+                      30.50–30.80° N
+                    </p>
+                    <p className="text-[10px] text-slate-300">
+                      79.40–79.75° E
+                    </p>
+                  </div>
+
+                  {riskMapAvailable ? (
+                    <>
+                      <svg
+                        className="pointer-events-none absolute inset-0 h-full w-full opacity-20"
+                        viewBox="0 0 900 355"
+                        preserveAspectRatio="none"
+                      >
+                        <path
+                          d="M0 90 C120 20 180 150 310 80 S500 40 620 110 S790 180 900 70"
+                          fill="none"
+                          stroke="#48656d"
+                          strokeWidth="1"
+                        />
+                        <path
+                          d="M0 165 C120 90 220 230 340 155 S530 100 680 180 S800 230 900 140"
+                          fill="none"
+                          stroke="#48656d"
+                          strokeWidth="1"
+                        />
+                        <path
+                          d="M180 0 C210 70 180 120 270 165 C340 205 310 255 405 285 C475 310 520 335 570 355"
+                          fill="none"
+                          stroke="#22d3ee"
+                          strokeWidth="3"
+                        />
+                      </svg>
+
+                      {mappedSettlements.map(
+                        ({ settlement, lat, lon }, index) => {
+                          const level = settlementLevel(settlement);
+                          const score = settlementScore(settlement);
+                          const position = mapPosition(lat, lon);
+
+                          return (
+                            <div
+                              key={
+                                settlement.settlement_id ||
+                                settlement.id ||
+                                `${settlementName(settlement)}-${index}`
+                              }
+                              className="absolute"
+                              style={position}
+                              title={`${settlementName(
+                                settlement,
+                              )} · ${level} · ${scoreText(score)}`}
+                            >
+                              <div className="relative -translate-x-1/2 -translate-y-1/2">
+                                <div
+                                  className={`h-4 w-4 rounded-full border-2 border-white/70 ${levelBg(
+                                    level,
+                                  )} shadow-[0_0_12px_rgba(248,113,113,0.35)]`}
+                                />
+                              </div>
+                            </div>
+                          );
+                        },
+                      )}
+
+                      <div className="absolute bottom-4 left-4 rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2">
+                        <p className="text-[9px] text-slate-600">
+                          MAPPED SETTLEMENTS
+                        </p>
+                        <p className="mt-1 text-[10px] text-cyan-300">
+                          {mappedSettlements.length} with coordinates
+                        </p>
+                      </div>
+                    </>
+>>>>>>> origin/main
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="max-w-sm rounded-md border border-[#263a42] bg-[#081016]/95 p-5 text-center">
@@ -728,6 +893,7 @@ export default function RiskPage() {
                     </div>
                   )}
 
+<<<<<<< HEAD
                   <div className="absolute left-5 top-5 z-[999] rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2">
                     <p className="text-[9px] text-slate-500">STUDY AREA</p>
                     <p className="mt-1 text-[10px] text-slate-300">
@@ -748,6 +914,11 @@ export default function RiskPage() {
                       </p>
                     </div>
                   )}
+=======
+                  <div className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded border border-[#31454c] bg-[#081016]/80 text-xs text-slate-400">
+                    N
+                  </div>
+>>>>>>> origin/main
                 </div>
               </div>
 
@@ -811,6 +982,7 @@ export default function RiskPage() {
                   )}
                 </div>
 
+<<<<<<< HEAD
                 {selectedSettlement && (
                   <div className="border-t border-[#1c3038] p-4">
                     <div className="mb-3 flex items-center justify-between">
@@ -888,6 +1060,8 @@ export default function RiskPage() {
                   </div>
                 )}
 
+=======
+>>>>>>> origin/main
                 <div className="m-4 rounded border border-[#253941] bg-[#0a151b] p-3">
                   <p className="text-[9px] uppercase tracking-wider text-slate-600">
                     Assessment
@@ -969,8 +1143,12 @@ export default function RiskPage() {
                             settlement.id ||
                             `${settlementName(settlement)}-${index}`
                           }
+<<<<<<< HEAD
                           onClick={() => setSelectedSettlement(settlement)}
                           className="cursor-pointer hover:bg-white/[0.02]"
+=======
+                          className="hover:bg-white/[0.02]"
+>>>>>>> origin/main
                         >
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
@@ -1045,9 +1223,64 @@ export default function RiskPage() {
                 </table>
               </div>
             </div>
+<<<<<<< HEAD
+=======
+
+            {/* DATA COVERAGE
+            <div className="mt-5 grid grid-cols-3 gap-4">
+              <div className="rounded-lg border border-[#1c3038] bg-[#0d1920] p-4">
+                <p className="text-[9px] uppercase tracking-wider text-slate-600">
+                  River Evidence
+                </p>
+                <p className="mt-2 text-xl font-semibold">
+                  {loading ? "—" : riverCount}
+                </p>
+                <p className="mt-1 text-[10px] text-slate-600">
+                  Records returned by hazard API
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-[#1c3038] bg-[#0d1920] p-4">
+                <p className="text-[9px] uppercase tracking-wider text-slate-600">
+                  Rainfall Evidence
+                </p>
+                <p className="mt-2 text-xl font-semibold">
+                  {loading ? "—" : rainfallCount}
+                </p>
+                <p className="mt-1 text-[10px] text-slate-600">
+                  Records returned by hazard API
+                </p>
+              </div>
+
+              <div className="rounded-lg border border-[#1c3038] bg-[#0d1920] p-4">
+                <p className="text-[9px] uppercase tracking-wider text-slate-600">
+                  Terrain Evidence
+                </p>
+                <p className="mt-2 text-xl font-semibold">
+                  {loading ? "—" : terrainCount}
+                </p>
+                <p className="mt-1 text-[10px] text-slate-600">
+                  Records returned by hazard API
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 flex items-center justify-between border-t border-[#1c3038] pt-4">
+              <p className="text-[9px] text-slate-600">
+                TRINETRA · Risk Intelligence
+              </p>
+              <p className="text-[9px] text-slate-600">
+                Backend risk assessment · {totalHazardRecords} hazard records
+              </p>
+            </div> */}
+>>>>>>> origin/main
           </div>
         </section>
       </div>
     </main>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/main

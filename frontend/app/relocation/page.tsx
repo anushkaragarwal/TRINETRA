@@ -1,6 +1,9 @@
 "use client";
 
+<<<<<<< HEAD
 import Link from "next/link";
+=======
+>>>>>>> origin/main
 import { useEffect, useMemo, useState } from "react";
 
 type Relocation = {
@@ -146,9 +149,13 @@ export default function RelocationPage() {
   }
 
   useEffect(() => {
+<<<<<<< HEAD
     void (async () => {
       await loadData();
     })();
+=======
+    loadData();
+>>>>>>> origin/main
   }, []);
 
   const selected = plans[selectedIndex] || plans[0];
@@ -179,20 +186,35 @@ export default function RelocationPage() {
 
           <p className="mb-3 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Monitoring</p>
           <nav className="space-y-1">
+<<<<<<< HEAD
             <Link href="/" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"><span>⌂</span>Command Center</Link>
             <Link href="/upstream" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"><span>◈</span>Upstream Intelligence</Link>
             <Link href="/risk" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"><span>◆</span>Risk Intelligence</Link>
             <Link href="/safe-sites" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"><span>⌂</span>Safe Sites</Link>
+=======
+            <a href="/" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"><span>⌂</span>Command Center</a>
+            <a href="/upstream" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"><span>◈</span>Upstream Intelligence</a>
+            <a href="/risk" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"><span>◆</span>Risk Intelligence</a>
+            <a href="/safe-sites" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"><span>⌂</span>Safe Sites</a>
+>>>>>>> origin/main
           </nav>
 
           <p className="mb-3 mt-8 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">Response</p>
           <nav>
+<<<<<<< HEAD
             <Link href="/relocation" className="flex items-center gap-3 rounded-md border border-cyan-400/20 bg-cyan-400/10 px-3 py-2.5 text-sm text-cyan-300"><span>⇄</span>Relocation</Link>
+=======
+            <a href="/relocation" className="flex items-center gap-3 rounded-md border border-cyan-400/20 bg-cyan-400/10 px-3 py-2.5 text-sm text-cyan-300"><span>⇄</span>Relocation</a>
+>>>>>>> origin/main
           </nav>
 
           <p className="mb-3 mt-8 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">System</p>
           <nav>
+<<<<<<< HEAD
             <Link href="/data-sources" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"><span>▣</span>Data Sources</Link>
+=======
+            <a href="/data-sources" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"><span>▣</span>Data Sources</a>
+>>>>>>> origin/main
           </nav>
 
           <div className="mt-12 rounded-md border border-[#1c3038] bg-[#0e1b22] p-3">
