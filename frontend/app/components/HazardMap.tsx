@@ -1,25 +1,118 @@
-type HazardMapProps = {
-  title?: string;
-  className?: string;
+"use client";
+
+import { MapContainer, TileLayer, CircleMarker, Popup, Rectangle } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+
+type RiskLevel = "CRITICAL" | "HIGH" | "MODERATE" | "LOW" | string;
+
+const RISK_COLORS: Record<string, string> = {
+  CRITICAL: "#f87171",
+  HIGH: "#fb923c",
+  MODERATE: "#facc15",
+  LOW: "#34d399",
 };
 
+const ZONE_COLORS: Record<string, string> = {
+  river: "#22d3ee",
+  rainfall: "#c084fc",
+  terrain: "#fb923c",
+  landslide: "#f87171",
+};
+
+export interface HazardZone {
+  type?: string;
+  lat?: number | null;
+  lon?: number | null;
+  hazard_score?: number | null;
+  risk_level?: RiskLevel | null;
+}
+
+export interface SettlementRisk {
+  id?: string;
+  name?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  population?: number | null;
+  risk_score?: number | null;
+  risk_level?: RiskLevel | null;
+}
+
+interface HazardMapProps {
+  zones: HazardZone[];
+  settlements: SettlementRisk[];
+  onZoneClick?: (zone: HazardZone) => void;
+  onSettlementClick?: (settlement: SettlementRisk) => void;
+}
+
 export default function HazardMap({
-  title = "Hazard map",
-  className = "",
+  zones,
+  settlements,
+  onZoneClick,
+  onSettlementClick,
 }: HazardMapProps) {
   return (
-    <div className={`rounded-2xl border border-slate-700 bg-slate-900/80 p-4 ${className}`}>
-      <div className="mb-3 text-sm font-semibold tracking-wide text-slate-200 uppercase">
-        {title}
-      </div>
-      <div className="relative h-64 overflow-hidden rounded-xl border border-slate-700 bg-slate-950">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,197,94,0.22),transparent_30%),radial-gradient(circle_at_80%_30%,rgba(251,146,60,0.18),transparent_28%),radial-gradient(circle_at_52%_78%,rgba(59,130,246,0.16),transparent_32%)]" />
-        <div className="absolute left-[18%] top-[28%] h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.9)]" />
-        <div className="absolute left-[42%] top-[42%] h-3 w-3 rounded-full bg-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.9)]" />
-        <div className="absolute left-[64%] top-[26%] h-3 w-3 rounded-full bg-red-400 shadow-[0_0_20px_rgba(248,113,113,0.9)]" />
-        <div className="absolute left-[56%] top-[68%] h-3 w-3 rounded-full bg-sky-400 shadow-[0_0_20px_rgba(96,165,250,0.9)]" />
-        <div className="absolute inset-0 [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:24px_24px]" />
-      </div>
-    </div>
+    <MapContainer
+      center={[30.65, 79.57]}
+      zoom={10}
+      style={{ height: "430px", width: "100%" }}
+      className="bg-[#0b1a20]"
+    >
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; OpenStreetMap contributors'
+      />
+
+      <Rectangle
+        bounds={[[30.5, 79.4], [30.8, 79.75]]}
+        pathOptions={{ color: "#55D6BE", weight: 1, fillOpacity: 0 }}
+      />
+
+      {zones.map((z, i) => {
+        if (typeof z.lat !== "number" || typeof z.lon !== "number") return null;
+        return (
+          <CircleMarker
+            key={`zone-${z.type}-${i}`}
+            center={[z.lat, z.lon]}
+            radius={4}
+            pathOptions={{
+              color: ZONE_COLORS[z.type ?? ""] ?? "#94a3b8",
+              fillColor: ZONE_COLORS[z.type ?? ""] ?? "#94a3b8",
+              fillOpacity: 0.55,
+              weight: 1,
+            }}
+            eventHandlers={{ click: () => onZoneClick?.(z) }}
+          >
+            <Popup>
+              <b>{z.type}</b><br />
+              Score: {z.hazard_score?.toFixed(1)} — {z.risk_level}
+            </Popup>
+          </CircleMarker>
+        );
+      })}
+
+      {settlements.map((s, i) => {
+        if (typeof s.latitude !== "number" || typeof s.longitude !== "number") return null;
+        return (
+          <CircleMarker
+            key={s.id ?? `${s.name}-${i}`}
+            center={[s.latitude, s.longitude]}
+            radius={9}
+            pathOptions={{
+              color: RISK_COLORS[s.risk_level ?? ""] ?? "#94a3b8",
+              fillColor: RISK_COLORS[s.risk_level ?? ""] ?? "#94a3b8",
+              fillOpacity: 0.9,
+              weight: 2,
+            }}
+            eventHandlers={{ click: () => onSettlementClick?.(s) }}
+          >
+            <Popup>
+              <b>{s.name}</b><br />
+              Risk: {s.risk_score?.toFixed(1)} — {s.risk_level}<br />
+              Population: {s.population ?? "—"}
+            </Popup>
+          </CircleMarker>
+        );
+      })}
+    </MapContainer>
   );
 }

@@ -1,25 +1,123 @@
-type UpstreamMapProps = {
-  title?: string;
-  className?: string;
+"use client";
+
+import { MapContainer, TileLayer, CircleMarker, Popup, Rectangle } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+
+export interface RiverPoint {
+  Station?: string;
+  Latitude?: number | null;
+  Longitude?: number | null;
+  hybrid_hazard_score?: number | null;
+  hybrid_risk_category?: string | null;
+  risk_category?: string | null;
+}
+
+export interface TerrainPoint {
+  cell_id?: string;
+  lat?: number | null;
+  lon?: number | null;
+  terrain_hazard_score?: number | null;
+  terrain_hazard_level?: string | null;
+}
+
+const LEVEL_COLORS: Record<string, string> = {
+  CRITICAL: "#f87171",
+  HIGH: "#fb923c",
+  MODERATE: "#facc15",
+  LOW: "#34d399",
 };
 
+function colorFor(level?: string | null) {
+  return LEVEL_COLORS[level ?? ""] ?? "#22d3ee";
+}
+
+interface UpstreamMapProps {
+  riverPoints: RiverPoint[];
+  terrainPoints: TerrainPoint[];
+  showTerrain?: boolean;
+  onRiverClick?: (point: RiverPoint) => void;
+  onTerrainClick?: (point: TerrainPoint) => void;
+}
+
 export default function UpstreamMap({
-  title = "Upstream map",
-  className = "",
+  riverPoints,
+  terrainPoints,
+  showTerrain = true,
+  onRiverClick,
+  onTerrainClick,
 }: UpstreamMapProps) {
   return (
-    <div className={`rounded-2xl border border-slate-700 bg-slate-900/80 p-4 ${className}`}>
-      <div className="mb-3 text-sm font-semibold tracking-wide text-slate-200 uppercase">
-        {title}
-      </div>
-      <div className="relative h-64 overflow-hidden rounded-xl border border-slate-700 bg-slate-950">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(56,189,248,0.2),transparent_28%),radial-gradient(circle_at_70%_55%,rgba(34,197,94,0.18),transparent_30%)]" />
-        <div className="absolute left-[24%] top-[36%] h-4 w-4 rounded-full bg-sky-400 shadow-[0_0_24px_rgba(56,189,248,0.9)]" />
-        <div className="absolute left-[48%] top-[42%] h-4 w-4 rounded-full bg-cyan-400 shadow-[0_0_24px_rgba(34,211,238,0.9)]" />
-        <div className="absolute left-[64%] top-[56%] h-4 w-4 rounded-full bg-emerald-400 shadow-[0_0_24px_rgba(52,211,153,0.9)]" />
-        <div className="absolute left-[74%] top-[28%] h-4 w-4 rounded-full bg-violet-400 shadow-[0_0_24px_rgba(167,139,250,0.9)]" />
-        <div className="absolute inset-0 [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:22px_22px]" />
-      </div>
-    </div>
+    <MapContainer
+      center={[30.65, 79.57]}
+      zoom={10}
+      style={{ height: "355px", width: "100%" }}
+      className="bg-[#101d20]"
+    >
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution="&copy; OpenStreetMap contributors"
+      />
+
+      <Rectangle
+        bounds={[[30.5, 79.4], [30.8, 79.75]]}
+        pathOptions={{ color: "#55D6BE", weight: 1, fillOpacity: 0 }}
+      />
+
+      {riverPoints.map((river, index) => {
+        if (typeof river.Latitude !== "number" || typeof river.Longitude !== "number") {
+          return null;
+        }
+        const level = river.hybrid_risk_category || river.risk_category;
+        return (
+          <CircleMarker
+            key={`river-${index}`}
+            center={[river.Latitude, river.Longitude]}
+            radius={7}
+            pathOptions={{
+              color: colorFor(level),
+              fillColor: colorFor(level),
+              fillOpacity: 0.85,
+              weight: 2,
+            }}
+            eventHandlers={{ click: () => onRiverClick?.(river) }}
+          >
+            <Popup>
+              <b>{river.Station || "River station"}</b>
+              <br />
+              Score: {river.hybrid_hazard_score?.toFixed?.(1) ?? "—"}
+              <br />
+              Level: {level || "—"}
+            </Popup>
+          </CircleMarker>
+        );
+      })}
+
+      {showTerrain &&
+        terrainPoints.map((point, index) => {
+          if (typeof point.lat !== "number" || typeof point.lon !== "number") {
+            return null;
+          }
+          return (
+            <CircleMarker
+              key={`terrain-${point.cell_id || index}`}
+              center={[point.lat, point.lon]}
+              radius={4}
+              pathOptions={{
+                color: "#fde047",
+                fillColor: "#fde047",
+                fillOpacity: 0.6,
+                weight: 1,
+              }}
+              eventHandlers={{ click: () => onTerrainClick?.(point) }}
+            >
+              <Popup>
+                Terrain score: {point.terrain_hazard_score?.toFixed?.(1) ?? "—"}
+                <br />
+                Level: {point.terrain_hazard_level || "—"}
+              </Popup>
+            </CircleMarker>
+          );
+        })}
+    </MapContainer>
   );
 }

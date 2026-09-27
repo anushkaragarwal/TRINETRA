@@ -1,25 +1,82 @@
-type SafeSitesMapProps = {
-  title?: string;
-  className?: string;
+"use client";
+
+import { MapContainer, TileLayer, CircleMarker, Popup, Rectangle } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+
+const STATUS_COLORS: Record<string, string> = {
+  HIGH_SUITABILITY: "#34d399",
+  MEDIUM_SUITABILITY: "#facc15",
+  LOW_SUITABILITY: "#94a3b8",
 };
 
+function colorFor(status?: string | null) {
+  return STATUS_COLORS[status ?? ""] ?? "#94a3b8";
+}
+
+export interface SafeSitePoint {
+  site: Record<string, unknown>;
+  lat: number;
+  lon: number;
+  id: string | number | null | undefined;
+  status?: string | null;
+  score: number | null;
+  title: string;
+  location: string;
+}
+
+interface SafeSitesMapProps {
+  points: SafeSitePoint[];
+  selectedId: string | number | null;
+  onSelect?: (id: string | number | null | undefined) => void;
+}
+
 export default function SafeSitesMap({
-  title = "Safe sites",
-  className = "",
+  points,
+  selectedId,
+  onSelect,
 }: SafeSitesMapProps) {
   return (
-    <div className={`rounded-2xl border border-slate-700 bg-slate-900/80 p-4 ${className}`}>
-      <div className="mb-3 text-sm font-semibold tracking-wide text-slate-200 uppercase">
-        {title}
-      </div>
-      <div className="relative h-64 overflow-hidden rounded-xl border border-slate-700 bg-slate-950">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_35%,rgba(16,185,129,0.2),transparent_28%),radial-gradient(circle_at_75%_30%,rgba(59,130,246,0.16),transparent_25%)]" />
-        <div className="absolute left-[28%] top-[38%] h-4 w-4 rounded-full bg-emerald-400 shadow-[0_0_22px_rgba(52,211,153,0.9)]" />
-        <div className="absolute left-[46%] top-[28%] h-4 w-4 rounded-full bg-emerald-500 shadow-[0_0_22px_rgba(16,185,129,0.9)]" />
-        <div className="absolute left-[62%] top-[56%] h-4 w-4 rounded-full bg-sky-400 shadow-[0_0_22px_rgba(56,189,248,0.9)]" />
-        <div className="absolute left-[76%] top-[40%] h-4 w-4 rounded-full bg-lime-400 shadow-[0_0_22px_rgba(163,230,53,0.9)]" />
-        <div className="absolute inset-0 [background-image:linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:22px_22px]" />
-      </div>
-    </div>
+    <MapContainer
+      center={[30.65, 79.57]}
+      zoom={10}
+      style={{ height: "680px", width: "100%" }}
+      className="bg-[#0a191f]"
+    >
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution="&copy; OpenStreetMap contributors"
+      />
+
+      <Rectangle
+        bounds={[[30.5, 79.4], [30.8, 79.75]]}
+        pathOptions={{ color: "#55D6BE", weight: 1, fillOpacity: 0 }}
+      />
+
+      {points.map((point, index) => {
+        const isSelected = String(point.id) === String(selectedId);
+        return (
+          <CircleMarker
+            key={`${point.id}-${index}`}
+            center={[point.lat, point.lon]}
+            radius={isSelected ? 11 : 7}
+            pathOptions={{
+              color: isSelected ? "#ffffff" : colorFor(point.status),
+              fillColor: colorFor(point.status),
+              fillOpacity: 0.9,
+              weight: isSelected ? 3 : 1.5,
+            }}
+            eventHandlers={{ click: () => onSelect?.(point.id) }}
+          >
+            <Popup>
+              <b>{point.title}</b>
+              <br />
+              {point.location}
+              <br />
+              Score: {point.score?.toFixed?.(1) ?? "—"} — {point.status || "UNKNOWN"}
+            </Popup>
+          </CircleMarker>
+        );
+      })}
+    </MapContainer>
   );
 }
