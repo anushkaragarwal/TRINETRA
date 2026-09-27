@@ -1,0 +1,12 @@
+NAME,LEVEL,TRU,NO_HH,POP_2011,POP_2026_EST,analysis_mode,assigned_station,hazard_timestamp,station_hazard_score,station_hazard_category,distance_band,proximity_score,population_exposure_score,habitation_priority_score,red_zone_label,recommended_action
+Joshimath  (NPP),TOWN,Urban,3898,16709,19689,HISTORICAL_SCENARIO,Lambagarh,2026-07-17 18:30:00,95.0,CRITICAL,NEAR_CORRIDOR,95,100.0,96.0,RED,Immediate field verification; prepare evacuation and relocation plan
+Badrinathpuri (NP),TOWN,Urban,850,2438,2873,HISTORICAL_SCENARIO,Lambagarh,2026-07-17 18:30:00,95.0,CRITICAL,NEAR_CORRIDOR,90,14.59,77.42,RED,Immediate field verification; prepare evacuation and relocation plan
+Pandukaswar,VILLAGE,Rural,312,1396,1645,HISTORICAL_SCENARIO,Lambagarh,2026-07-17 18:30:00,95.0,CRITICAL,NEAR_CORRIDOR,90,8.35,76.17,RED,Immediate field verification; prepare evacuation and relocation plan
+Topovan,VILLAGE,Rural,270,1064,1254,HISTORICAL_SCENARIO,Lambagarh,2026-07-17 18:30:00,95.0,CRITICAL,NEAR_CORRIDOR,90,6.37,75.77,RED,Immediate field verification; prepare evacuation and relocation plan
+Malari,VILLAGE,Rural,1076,1933,2278,HISTORICAL_SCENARIO,Lambagarh,2026-07-17 18:30:00,95.0,CRITICAL,NEAR_CORRIDOR,85,11.57,75.31,RED,Immediate field verification; prepare evacuation and relocation plan
+Mana,VILLAGE,Rural,558,1214,1430,HISTORICAL_SCENARIO,Lambagarh,2026-07-17 18:30:00,95.0,CRITICAL,UPPER_CORRIDOR,85,7.26,74.45,ORANGE,Increase monitoring; prepare shelters and issue pre-alert
+Pulana Chak Bhyudar,VILLAGE,Rural,55,285,336,HISTORICAL_SCENARIO,Lambagarh,2026-07-17 18:30:00,95.0,CRITICAL,NEAR_CORRIDOR,85,1.71,73.34,ORANGE,Increase monitoring; prepare shelters and issue pre-alert
+Raini Chak Subhai,VILLAGE,Rural,56,258,304,HISTORICAL_SCENARIO,Lambagarh,2026-07-17 18:30:00,95.0,CRITICAL,NEAR_CORRIDOR,85,1.54,73.31,ORANGE,Increase monitoring; prepare shelters and issue pre-alert
+Khiron,VILLAGE,Rural,30,90,106,HISTORICAL_SCENARIO,Lambagarh,2026-07-17 18:30:00,95.0,CRITICAL,UPPER_CORRIDOR,85,0.54,73.11,ORANGE,Increase monitoring; prepare shelters and issue pre-alert
+Thaing,VILLAGE,Rural,165,806,950,HISTORICAL_SCENARIO,Lambagarh,2026-07-17 18:30:00,95.0,CRITICAL,UPPER_CORRIDOR,80,4.83,72.47,ORANGE,Increase monitoring; prepare shelters and issue pre-alert
+Bhyudar,VILLAGE,Rural,11,61,72,HISTORICAL_SCENARIO,Lambagarh,2026-07-17 18:30:00,95.0,CRITICAL,NEAR_CORRIDOR,80,0.37,71.57,ORANGE,Increase monitoring; prepare shelters and issue pre-alert

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from config import (
+from .config import (
     MIN_LAT,
     MAX_LAT,
     MIN_LON,
@@ -75,8 +75,9 @@ def clean_data(df):
     # ---------------------------------------------------------
 
     df[TIME_COLUMN] = pd.to_datetime(
-        df[TIME_COLUMN],
-        errors="coerce",
+    df[TIME_COLUMN],
+    format="%d-%m-%Y %H:%M",
+    errors="coerce",
     )
 
     # ---------------------------------------------------------

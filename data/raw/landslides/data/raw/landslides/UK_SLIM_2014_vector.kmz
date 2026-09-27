@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/kml/2.2 http://schemas.opengis.net/kml/2.2.0/ogckml22.xsd">
+
+<Folder><LookAt id="superoverlay">
+<longitude>78.75</longitude>
+<latitude>34.256079626634666</latitude>
+<altitude>0</altitude>
+<heading>0</heading>
+<tilt>0</tilt>
+<range>3196294.0552205606</range>
+<altitudeMode>clampToGround</altitudeMode>
+</LookAt>
+
+<NetworkLink><name>Super-overlay: disaster:UK_SLIM_2014_GCS</name>
+<Region>
+<LatLonAltBox><north>45.0</north><south>22.5</south><east>90.0</east><west>67.5</west></LatLonAltBox>
+<Lod><minLodPixels>128</minLodPixels>
+<maxLodPixels>-1</maxLodPixels></Lod>
+</Region>
+<Link><href>https://bhuvan-vec2.nrsc.gov.in/bhuvan/gwc/service/kml/disaster:UK_SLIM_2014_GCS/x11y5z3.kml.kmz</href>
+<viewRefreshMode>onRegion</viewRefreshMode>
+</Link>
+</NetworkLink>
+</Folder>
+</kml>
