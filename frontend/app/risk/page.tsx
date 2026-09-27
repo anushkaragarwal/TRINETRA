@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 
 const RiskMap = dynamic(() => import("../components/RiskMap"), {
@@ -303,7 +304,9 @@ export default function RiskPage() {
   };
 
   useEffect(() => {
-    loadData();
+    void (async () => {
+      await loadData();
+    })();
   }, []);
 
   const riverRecords = hazards?.river ?? [];
@@ -415,8 +418,6 @@ export default function RiskPage() {
   const riverCount = riverRecords.length;
   const rainfallCount = rainfallRecords.length;
   const terrainCount = terrainRecords.length;
-  const totalHazardRecords = riverCount + rainfallCount + terrainCount;
-
   const factorRows = [
     {
       name: "Rainfall",
@@ -463,45 +464,45 @@ export default function RiskPage() {
           </p>
 
           <nav className="space-y-1">
-            <a
+            <Link
               href="/"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>⌂</span>
               Command Center
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/upstream"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>◈</span>
               Upstream Intelligence
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/risk"
               className="flex items-center gap-3 rounded-md border border-cyan-400/20 bg-cyan-400/10 px-3 py-2.5 text-sm text-cyan-300"
             >
               <span>◆</span>
               Risk Intelligence
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/safe-sites"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>⌂</span>
               Safe Sites
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/relocation"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>⇄</span>
               Relocation
-            </a>
+            </Link>
           </nav>
 
           <p className="mb-3 mt-8 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">
@@ -509,13 +510,13 @@ export default function RiskPage() {
           </p>
 
           <nav>
-            <a
+            <Link
               href="/data-sources"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>▣</span>
               Data Sources
-            </a>
+            </Link>
           </nav>
 
           <div className="mt-auto pt-12">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 
 const UpstreamMap = dynamic(() => import("../components/UpstreamMap"), {
@@ -250,7 +251,9 @@ export default function UpstreamPage() {
   };
 
   useEffect(() => {
-    loadData();
+    void (async () => {
+      await loadData();
+    })();
   }, []);
 
   const rivers = data?.river ?? [];
@@ -299,6 +302,8 @@ export default function UpstreamPage() {
 
     return count;
   }, [displayRiverScore, displayRainfallScore, displayTerrainScore]);
+
+  const sentinelImageAlt = "Satellite evidence output for the event region";
 
   const riverMapPoints = rivers
     .filter(
@@ -366,45 +371,45 @@ export default function UpstreamPage() {
           </p>
 
           <nav className="space-y-1">
-            <a
+            <Link
               href="/"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>⌂</span>
               Command Center
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/upstream"
               className="flex items-center gap-3 rounded-md border border-cyan-400/20 bg-cyan-400/10 px-3 py-2.5 text-sm text-cyan-300"
             >
               <span>◈</span>
               Upstream Intelligence
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/risk"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>◆</span>
               Risk Intelligence
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/safe-sites"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>⌂</span>
               Safe Sites
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/relocation"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>⇄</span>
               Relocation
-            </a>
+            </Link>
           </nav>
 
           <p className="mb-3 mt-8 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">
@@ -412,13 +417,13 @@ export default function UpstreamPage() {
           </p>
 
           <nav>
-            <a
+            <Link
               href="/data-sources"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>▣</span>
               Data Sources
-            </a>
+            </Link>
           </nav>
 
           <div className="mt-auto pt-12">
@@ -904,7 +909,7 @@ export default function UpstreamPage() {
                   <div className="overflow-hidden rounded-md border border-[#1c3038] bg-[#101d20]">
                     <img
                       src="/satellite/lambagarh_sentinel2_optical.png"
-                      alt="Sentinel-2 Optical Evidence — Lambagarh Event"
+                      alt={sentinelImageAlt}
                       className="block h-auto w-full"
                     />
                   </div>
@@ -925,7 +930,7 @@ export default function UpstreamPage() {
                   <div className="overflow-hidden rounded-md border border-[#1c3038] bg-[#101d20]">
                     <img
                       src="/satellite/lambagarh_sentinel1_sar.png"
-                      alt="Sentinel-1 SAR Analysis — Lambagarh Event"
+                      alt={sentinelImageAlt}
                       className="block h-auto w-full"
                     />
                   </div>
@@ -947,7 +952,7 @@ export default function UpstreamPage() {
                 <div className="overflow-hidden rounded-md border border-[#1c3038] bg-[#101d20]">
                   <img
                     src="/satellite/lambagarh_satellite_evidence_result.png"
-                    alt="Satellite Evidence Result — Lambagarh Event"
+                    alt={sentinelImageAlt}
                     className="block h-auto w-full"
                   />
                 </div>

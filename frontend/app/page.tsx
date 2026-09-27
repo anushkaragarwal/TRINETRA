@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 import dynamic from "next/dynamic";
 
@@ -151,21 +152,6 @@ function riskColor(level?: string | null) {
   }
 }
 
-function riskDot(level?: string | null) {
-  switch (level) {
-    case "CRITICAL":
-      return "bg-red-400";
-    case "HIGH":
-      return "bg-orange-400";
-    case "MODERATE":
-      return "bg-yellow-400";
-    case "LOW":
-      return "bg-emerald-400";
-    default:
-      return "bg-slate-500";
-  }
-}
-
 function sourceLabel(type?: string) {
   switch (type) {
     case "river":
@@ -261,7 +247,9 @@ export default function Page() {
   };
 
   useEffect(() => {
-    loadDashboard();
+    void (async () => {
+      await loadDashboard();
+    })();
   }, []);
 
   const zones = useMemo(() => {
@@ -392,8 +380,6 @@ export default function Page() {
 
   const terrainScore = trinetraData?.components?.terrain?.score ?? null;
 
-  const landslideScore = trinetraData?.components?.landslide?.score ?? null;
-
   const satelliteScore = trinetraData?.components?.satellite?.score ?? null;
 
   const rainfallLevel = trinetraData?.components?.rainfall?.level ?? null;
@@ -439,45 +425,45 @@ export default function Page() {
           </p>
 
           <nav className="space-y-1">
-            <a
+            <Link
               href="/"
               className="flex items-center gap-3 rounded-md border border-cyan-400/20 bg-cyan-400/10 px-3 py-2.5 text-sm text-cyan-300"
             >
               <span>⌂</span>
               Command Center
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/upstream"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>◈</span>
               Upstream Intelligence
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/risk"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>◆</span>
               Risk Intelligence
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/safe-sites"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>⌂</span>
               Safe Sites
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="/relocation"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>⇄</span>
               Relocation
-            </a>
+            </Link>
           </nav>
 
           <p className="mb-3 mt-8 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">
@@ -485,13 +471,13 @@ export default function Page() {
           </p>
 
           <nav>
-            <a
+            <Link
               href="/data-sources"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>▣</span>
               Data Sources
-            </a>
+            </Link>
           </nav>
 
           <div className="mt-auto pt-12">

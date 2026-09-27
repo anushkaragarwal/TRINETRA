@@ -1,5 +1,6 @@
  "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 type Source = {
@@ -250,7 +251,9 @@ export default function DataSourcesPage() {
   }
 
   useEffect(() => {
-    loadSources();
+    void (async () => {
+      await loadSources();
+    })();
   }, []);
 
   const connectedCount = useMemo(
@@ -323,26 +326,26 @@ export default function DataSourcesPage() {
           </p>
 
           <nav className="space-y-1">
-            <a href="/" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white">
+            <Link href="/" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white">
               <span>⌂</span>
               Command Center
-            </a>
-            <a href="/upstream" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white">
+            </Link>
+            <Link href="/upstream" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white">
               <span>◈</span>
               Upstream Intelligence
-            </a>
-            <a href="/risk" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white">
+            </Link>
+            <Link href="/risk" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white">
               <span>◆</span>
               Risk Intelligence
-            </a>
-            <a href="/safe-sites" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white">
+            </Link>
+            <Link href="/safe-sites" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white">
               <span>⌂</span>
               Safe Sites
-            </a>
-            <a href="/relocation" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white">
+            </Link>
+            <Link href="/relocation" className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white">
               <span>⇄</span>
               Relocation
-            </a>
+            </Link>
           </nav>
 
           <p className="mb-3 mt-8 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">
@@ -350,10 +353,10 @@ export default function DataSourcesPage() {
           </p>
 
           <nav>
-            <a href="/data-sources" className="flex items-center gap-3 rounded-md border border-cyan-400/20 bg-cyan-400/10 px-3 py-2.5 text-sm text-cyan-300">
+            <Link href="/data-sources" className="flex items-center gap-3 rounded-md border border-cyan-400/20 bg-cyan-400/10 px-3 py-2.5 text-sm text-cyan-300">
               <span>▣</span>
               Data Sources
-            </a>
+            </Link>
           </nav>
 
           <div className="mt-12 rounded-md border border-[#1c3038] bg-[#0e1b22] p-3">
