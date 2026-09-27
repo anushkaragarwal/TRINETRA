@@ -1,6 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+<<<<<<< HEAD
+import Link from "next/link";
+import dynamic from "next/dynamic";
+
+const UpstreamMap = dynamic(() => import("../components/UpstreamMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[355px] items-center justify-center text-xs text-slate-500">
+      Loading map…
+    </div>
+  ),
+});
+=======
+>>>>>>> origin/main
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -61,6 +75,10 @@ type SatelliteProduct = {
   PublicationDate?: string;
   GeoFootprint?: unknown;
 };
+<<<<<<< HEAD
+
+=======
+>>>>>>> origin/main
 type TrinetraResponse = {
   hazard_score?: number;
   risk_level?: string;
@@ -73,6 +91,10 @@ type TrinetraResponse = {
     satellite_products?: number;
   };
 };
+<<<<<<< HEAD
+
+=======
+>>>>>>> origin/main
 type HazardsResponse = {
   status?: string;
   river?: RiverRecord[];
@@ -120,7 +142,10 @@ const DEFAULT_EVENT_EVIDENCE: EventEvidence = {
     "Combined hydrological and local DEM-derived terrain evidence, with satellite observations retained as supporting post-event evidence.",
 };
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> origin/main
 function levelColor(level?: string | null) {
   switch (level) {
     case "CRITICAL":
@@ -172,6 +197,8 @@ function formatDate(value?: string | null) {
   });
 }
 
+<<<<<<< HEAD
+=======
 function mapPosition(lat: number, lon: number) {
   const left = ((lon - 79.4) / 0.35) * 100;
   const top = (1 - (lat - 30.5) / 0.3) * 100;
@@ -182,6 +209,7 @@ function mapPosition(lat: number, lon: number) {
   };
 }
 
+>>>>>>> origin/main
 function maxScore(records: { score?: number | null }[]) {
   const scores = records
     .map((item) => item.score)
@@ -192,25 +220,49 @@ function maxScore(records: { score?: number | null }[]) {
 
 export default function UpstreamPage() {
   const [data, setData] = useState<HazardsResponse | null>(null);
+<<<<<<< HEAD
+  const [trinetraData, setTrinetraData] = useState<TrinetraResponse | null>(
+    null,
+  );
+  const [eventEvidence, setEventEvidence] = useState<EventEvidence | null>(
+    DEFAULT_EVENT_EVIDENCE,
+  );
+=======
   const [trinetraData, setTrinetraData] =
   useState<TrinetraResponse | null>(null);
   const [eventEvidence, setEventEvidence] = useState<EventEvidence | null>(DEFAULT_EVENT_EVIDENCE);
+>>>>>>> origin/main
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [layer, setLayer] = useState<"SAR" | "HYDRO">("HYDRO");
 
+<<<<<<< HEAD
+  const [selectedRiver, setSelectedRiver] = useState<RiverRecord | null>(null);
+  const [selectedTerrainPoint, setSelectedTerrainPoint] =
+    useState<TerrainRecord | null>(null);
+
+=======
+>>>>>>> origin/main
   const loadData = async (manual = false) => {
     setError("");
     manual ? setRefreshing(true) : setLoading(true);
 
     try {
       const [hazardsResponse, evidenceResponse, trinetraResponse] =
+<<<<<<< HEAD
+        await Promise.all([
+          fetch(`${API_BASE}/api/hazards`, { cache: "no-store" }),
+          fetch(`${API_BASE}/api/event-evidence`, { cache: "no-store" }),
+          fetch(`${API_BASE}/api/trinetra`, { cache: "no-store" }),
+        ]);
+=======
   await Promise.all([
     fetch(`${API_BASE}/api/hazards`, { cache: "no-store" }),
     fetch(`${API_BASE}/api/event-evidence`, { cache: "no-store" }),
     fetch(`${API_BASE}/api/trinetra`, { cache: "no-store" }),
   ]);
+>>>>>>> origin/main
 
       if (!hazardsResponse.ok) {
         throw new Error(`Hazards API returned ${hazardsResponse.status}`);
@@ -219,10 +271,15 @@ export default function UpstreamPage() {
       const result = (await hazardsResponse.json()) as HazardsResponse;
       setData(result);
       if (trinetraResponse.ok) {
+<<<<<<< HEAD
+        setTrinetraData((await trinetraResponse.json()) as TrinetraResponse);
+      }
+=======
   setTrinetraData(
     (await trinetraResponse.json()) as TrinetraResponse,
   );
 }
+>>>>>>> origin/main
 
       if (evidenceResponse.ok) {
         const evidence = (await evidenceResponse.json()) as {
@@ -244,7 +301,13 @@ export default function UpstreamPage() {
   };
 
   useEffect(() => {
+<<<<<<< HEAD
+    void (async () => {
+      await loadData();
+    })();
+=======
     loadData();
+>>>>>>> origin/main
   }, []);
 
   const rivers = data?.river ?? [];
@@ -253,6 +316,19 @@ export default function UpstreamPage() {
   const satellites = data?.satellite ?? [];
 
   const latestRiver = rivers[0] ?? {
+<<<<<<< HEAD
+    Station: eventEvidence?.station,
+    hybrid_hazard_score: eventEvidence?.hydrological_risk_score,
+    hybrid_risk_category:
+      (eventEvidence?.hydrological_risk_score ?? 0) >= 90
+        ? "CRITICAL"
+        : "Available",
+  };
+
+  const latestRainfall = rainfall[0];
+
+  const latestTerrain = terrain[0];
+=======
   Station: eventEvidence?.station,
   hybrid_hazard_score: eventEvidence?.hydrological_risk_score,
   hybrid_risk_category:
@@ -264,6 +340,7 @@ export default function UpstreamPage() {
 const latestRainfall = rainfall[0];
 
 const latestTerrain = terrain[0];
+>>>>>>> origin/main
 
   const riverScore = maxScore(
     rivers.map((item) => ({ score: item.hybrid_hazard_score })),
@@ -276,6 +353,52 @@ const latestTerrain = terrain[0];
     terrain.map((item) => ({ score: item.terrain_hazard_score })),
   );
   const displayRiverScore =
+<<<<<<< HEAD
+    trinetraData?.components?.river_score ?? riverScore;
+
+  const displayRainfallScore =
+    trinetraData?.components?.rainfall_score ?? rainfallScore;
+
+  const displayTerrainScore =
+    trinetraData?.components?.terrain_score ?? terrainScore;
+
+  const activeSignals = useMemo(() => {
+    let count = 0;
+
+    if ((displayRiverScore ?? 0) >= 75) count += 1;
+    if ((displayRainfallScore ?? 0) >= 75) count += 1;
+    if ((displayTerrainScore ?? 0) >= 75) count += 1;
+
+    return count;
+  }, [displayRiverScore, displayRainfallScore, displayTerrainScore]);
+
+  const sentinelImageAlt = "Satellite evidence output for the event region";
+
+  const riverMapPoints = rivers
+    .filter(
+      (item) =>
+        typeof item.Latitude === "number" &&
+        typeof item.Longitude === "number",
+    )
+    .slice(0, 20);
+
+  if (
+    riverMapPoints.length === 0 &&
+    typeof eventEvidence?.latitude === "number" &&
+    typeof eventEvidence?.longitude === "number"
+  ) {
+    riverMapPoints.push({
+      Station: eventEvidence.station,
+      Latitude: eventEvidence.latitude,
+      Longitude: eventEvidence.longitude,
+      hybrid_hazard_score: eventEvidence.hydrological_risk_score,
+      hybrid_risk_category:
+        (eventEvidence.hydrological_risk_score ?? 0) >= 90
+          ? "CRITICAL"
+          : "Available",
+    });
+  }
+=======
   trinetraData?.components?.river_score ?? riverScore;
 
 const displayRainfallScore =
@@ -318,6 +441,7 @@ if (
         : "Available",
   });
 }
+>>>>>>> origin/main
 
   const terrainMapPoints = terrain
     .filter(
@@ -360,45 +484,77 @@ if (
           </p>
 
           <nav className="space-y-1">
+<<<<<<< HEAD
+            <Link
+=======
             <a
+>>>>>>> origin/main
               href="/"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>⌂</span>
               Command Center
+<<<<<<< HEAD
+            </Link>
+
+            <Link
+=======
             </a>
 
             <a
+>>>>>>> origin/main
               href="/upstream"
               className="flex items-center gap-3 rounded-md border border-cyan-400/20 bg-cyan-400/10 px-3 py-2.5 text-sm text-cyan-300"
             >
               <span>◈</span>
               Upstream Intelligence
+<<<<<<< HEAD
+            </Link>
+
+            <Link
+=======
             </a>
 
             <a
+>>>>>>> origin/main
               href="/risk"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>◆</span>
               Risk Intelligence
+<<<<<<< HEAD
+            </Link>
+
+            <Link
+=======
             </a>
 
             <a
+>>>>>>> origin/main
               href="/safe-sites"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>⌂</span>
               Safe Sites
+<<<<<<< HEAD
+            </Link>
+
+            <Link
+=======
             </a>
 
             <a
+>>>>>>> origin/main
               href="/relocation"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>⇄</span>
               Relocation
+<<<<<<< HEAD
+            </Link>
+=======
             </a>
+>>>>>>> origin/main
           </nav>
 
           <p className="mb-3 mt-8 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-600">
@@ -406,13 +562,21 @@ if (
           </p>
 
           <nav>
+<<<<<<< HEAD
+            <Link
+=======
             <a
+>>>>>>> origin/main
               href="/data-sources"
               className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
             >
               <span>▣</span>
               Data Sources
+<<<<<<< HEAD
+            </Link>
+=======
             </a>
+>>>>>>> origin/main
           </nav>
 
           <div className="mt-auto pt-12">
@@ -463,9 +627,13 @@ if (
 
               <div className="text-right">
                 <p className="text-[10px] text-slate-500">LAST DATA LOAD</p>
+<<<<<<< HEAD
+                <p className="text-xs text-slate-300">10 Sept 2026, 03:00</p>
+=======
                 <p className="text-xs text-slate-300">
 10 Sept 2026, 03:00
                 </p>
+>>>>>>> origin/main
               </div>
 
               <div
@@ -540,7 +708,13 @@ if (
                   )}`}
                 >
                   {latestRiver?.hybrid_risk_category ||
+<<<<<<< HEAD
+                    ((displayRiverScore ?? 0) >= 90
+                      ? "CRITICAL"
+                      : "Available")}
+=======
   ((displayRiverScore ?? 0) >= 90 ? "CRITICAL" : "Available")}
+>>>>>>> origin/main
                 </p>
               </div>
 
@@ -589,7 +763,10 @@ if (
                     >
                       SAR CATALOGUE
                     </button>
+<<<<<<< HEAD
+=======
 
+>>>>>>> origin/main
                     <button
                       onClick={() => setLayer("HYDRO")}
                       className={`rounded border px-3 py-1.5 text-[10px] ${
@@ -604,6 +781,35 @@ if (
                 </div>
 
                 <div className="relative h-[355px] overflow-hidden bg-[#101d20]">
+<<<<<<< HEAD
+                  {layer === "HYDRO" ? (
+                    <UpstreamMap
+                      riverPoints={riverMapPoints}
+                      terrainPoints={terrainMapPoints}
+                      showTerrain={true}
+                      onRiverClick={setSelectedRiver}
+                      onTerrainClick={setSelectedTerrainPoint}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="max-w-sm rounded-md border border-cyan-400/20 bg-[#081016]/90 p-5 text-center">
+                        <p className="text-xs font-medium text-cyan-300">
+                          SENTINEL-1 SAR CATALOGUE
+                        </p>
+                        <p className="mt-2 text-[10px] leading-4 text-slate-500">
+                          {satellites.length} Sentinel-1 products were
+                          returned by the Copernicus catalogue for the
+                          configured study area and recent search window.
+                        </p>
+                        <p className="mt-3 text-[10px] text-slate-600">
+                          Catalogue metadata is shown below.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="absolute left-5 top-5 z-[999] rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2">
+=======
                   <div
                     className="absolute inset-0 opacity-20"
                     style={{
@@ -638,6 +844,7 @@ if (
                   </svg>
 
                   <div className="absolute left-5 top-5 rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2">
+>>>>>>> origin/main
                     <p className="text-[9px] text-slate-600">STUDY AREA</p>
                     <p className="mt-1 text-[10px] text-slate-300">
                       30.50–30.80° N
@@ -647,7 +854,11 @@ if (
                     </p>
                   </div>
 
+<<<<<<< HEAD
+                  <div className="absolute right-5 top-5 z-[999] rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2 text-right">
+=======
                   <div className="absolute right-5 top-5 rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2 text-right">
+>>>>>>> origin/main
                     <p className="text-[9px] text-slate-600">LAYER</p>
                     <p className="mt-1 text-[10px] text-cyan-300">
                       {layer === "SAR"
@@ -656,6 +867,9 @@ if (
                     </p>
                   </div>
 
+<<<<<<< HEAD
+                  <div className="absolute bottom-5 left-5 z-[999] rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2">
+=======
                   {layer === "HYDRO" &&
                     riverMapPoints.map((river, index) => {
                       const position = mapPosition(
@@ -724,6 +938,7 @@ if (
                   )}
 
                   <div className="absolute bottom-5 left-5 rounded border border-[#31454c] bg-[#081016]/90 px-3 py-2">
+>>>>>>> origin/main
                     <p className="text-[9px] text-slate-600">CURRENT LAYER</p>
                     <p className="mt-1 text-[10px] text-cyan-300">
                       {layer === "SAR"
@@ -827,6 +1042,107 @@ if (
                     </p>
                   </div>
                 </div>
+<<<<<<< HEAD
+
+                {(selectedRiver || selectedTerrainPoint) && (
+                  <div className="border-t border-[#1c3038] p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="text-[10px] uppercase tracking-wider text-cyan-400">
+                        {selectedRiver
+                          ? "Selected River Station"
+                          : "Selected Terrain Point"}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setSelectedRiver(null);
+                          setSelectedTerrainPoint(null);
+                        }}
+                        className="text-[10px] text-slate-500 hover:text-white"
+                      >
+                        CLEAR
+                      </button>
+                    </div>
+
+                    {selectedRiver && (
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Station</span>
+                          <span className="text-slate-200">
+                            {selectedRiver.Station || "—"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Hazard Score</span>
+                          <span className="text-cyan-300">
+                            {scoreOf(selectedRiver.hybrid_hazard_score)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Risk Level</span>
+                          <span
+                            className={levelColor(
+                              selectedRiver.hybrid_risk_category ||
+                                selectedRiver.risk_category,
+                            )}
+                          >
+                            {selectedRiver.hybrid_risk_category ||
+                              selectedRiver.risk_category ||
+                              "—"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Discharge</span>
+                          <span className="text-slate-300">
+                            {typeof selectedRiver[
+                              "Telemetry Hourly River Water Discharge (m3/sec)"
+                            ] === "number"
+                              ? `${selectedRiver[
+                                  "Telemetry Hourly River Water Discharge (m3/sec)"
+                                ]!.toFixed(2)} m³/s`
+                              : "—"}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedTerrainPoint && (
+                      <div className="space-y-2 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Cell ID</span>
+                          <span className="text-slate-200">
+                            {selectedTerrainPoint.cell_id || "—"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">
+                            Terrain Score
+                          </span>
+                          <span className="text-cyan-300">
+                            {scoreOf(
+                              selectedTerrainPoint.terrain_hazard_score,
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Level</span>
+                          <span
+                            className={levelColor(
+                              selectedTerrainPoint.terrain_hazard_level,
+                            )}
+                          >
+                            {selectedTerrainPoint.terrain_hazard_level || "—"}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* EVENT / SATELLITE EVIDENCE */}
+            <div className="mt-5 rounded-lg border border-[#1c3038] bg-[#0d1920] p-5">
+=======
               </div>
             </div>
 
@@ -980,6 +1296,7 @@ latestRainfall?.["Daily Departure Per"] !== null
             {/* EVENT / SATELLITE EVIDENCE */}
             <div className="mt-5 rounded-lg border border-[#1c3038] bg-[#0d1920] p-5">
 
+>>>>>>> origin/main
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[9px] uppercase tracking-wider text-slate-600">
@@ -991,8 +1308,14 @@ latestRainfall?.["Daily Departure Per"] !== null
                   </h3>
 
                   <p className="mt-1 text-[10px] leading-4 text-slate-500">
+<<<<<<< HEAD
+                    Supporting satellite evidence from the TRINETRA event
+                    analysis dataset. It is not presented as an independent
+                    flood confirmation.
+=======
                     Supporting satellite evidence from the TRINETRA event analysis dataset.
                     It is not presented as an independent flood confirmation.
+>>>>>>> origin/main
                   </p>
                 </div>
 
@@ -1002,15 +1325,26 @@ latestRainfall?.["Daily Departure Per"] !== null
                   </p>
 
                   <p className="mt-1 text-xs text-slate-300">
+<<<<<<< HEAD
+                    {eventEvidence?.event_time
+                      ? formatDate(eventEvidence.event_time)
+                      : "—"}
+=======
                     {eventEvidence?.event_time ? formatDate(eventEvidence.event_time) : "—"}
+>>>>>>> origin/main
                   </p>
                 </div>
               </div>
 
+<<<<<<< HEAD
+              {/* TWO SATELLITE ANALYSIS IMAGES */}
+              <div className="mt-5 grid grid-cols-2 gap-4">
+=======
 
               {/* TWO SATELLITE ANALYSIS IMAGES */}
               <div className="mt-5 grid grid-cols-2 gap-4">
 
+>>>>>>> origin/main
                 {/* SENTINEL-2 */}
                 <div>
                   <div className="mb-2 flex items-center justify-between">
@@ -1026,13 +1360,20 @@ latestRainfall?.["Daily Departure Per"] !== null
                   <div className="overflow-hidden rounded-md border border-[#1c3038] bg-[#101d20]">
                     <img
                       src="/satellite/lambagarh_sentinel2_optical.png"
+<<<<<<< HEAD
+                      alt={sentinelImageAlt}
+=======
                       alt="Sentinel-2 Optical Evidence — Lambagarh Event"
+>>>>>>> origin/main
                       className="block h-auto w-full"
                     />
                   </div>
                 </div>
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> origin/main
                 {/* SENTINEL-1 */}
                 <div>
                   <div className="mb-2 flex items-center justify-between">
@@ -1048,11 +1389,21 @@ latestRainfall?.["Daily Departure Per"] !== null
                   <div className="overflow-hidden rounded-md border border-[#1c3038] bg-[#101d20]">
                     <img
                       src="/satellite/lambagarh_sentinel1_sar.png"
+<<<<<<< HEAD
+                      alt={sentinelImageAlt}
+=======
                       alt="Sentinel-1 SAR Analysis — Lambagarh Event"
+>>>>>>> origin/main
                       className="block h-auto w-full"
                     />
                   </div>
                 </div>
+<<<<<<< HEAD
+              </div>
+
+              {/* THIRD IMAGE — EVIDENCE RESULT */}
+              <div className="mt-5">
+=======
 
               </div>
 
@@ -1060,6 +1411,7 @@ latestRainfall?.["Daily Departure Per"] !== null
               {/* THIRD IMAGE — REPLACES EVIDENCE SUMMARY */}
               <div className="mt-5">
 
+>>>>>>> origin/main
                 <div className="mb-2 flex items-center justify-between">
                   <h4 className="text-base font-medium text-slate-300">
                     Satellite Evidence Result
@@ -1073,6 +1425,15 @@ latestRainfall?.["Daily Departure Per"] !== null
                 <div className="overflow-hidden rounded-md border border-[#1c3038] bg-[#101d20]">
                   <img
                     src="/satellite/lambagarh_satellite_evidence_result.png"
+<<<<<<< HEAD
+                    alt={sentinelImageAlt}
+                    className="block h-auto w-full"
+                  />
+                </div>
+              </div>
+            </div>
+
+=======
                     alt="Satellite Evidence Result — Lambagarh Event"
                     className="block h-auto w-full"
                   />
@@ -1188,6 +1549,7 @@ latestRainfall?.["Daily Departure Per"] !== null
               </div>
             </div> */}
 
+>>>>>>> origin/main
             {/* SENTINEL TABLE */}
             <div className="mt-5 rounded-lg border border-[#1c3038] bg-[#0d1920]">
               <div className="flex items-center justify-between border-b border-[#1c3038] px-4 py-3">
@@ -1300,7 +1662,12 @@ latestRainfall?.["Daily Departure Per"] !== null
                 TRINETRA · Upstream Intelligence
               </p>
               <p className="text-[9px] text-slate-600">
+<<<<<<< HEAD
+                Live feeds from /api/hazards · Event evidence from
+                /api/event-evidence
+=======
                 Live feeds from /api/hazards · Event evidence from /api/event-evidence
+>>>>>>> origin/main
               </p>
             </div>
           </div>
@@ -1308,4 +1675,8 @@ latestRainfall?.["Daily Departure Per"] !== null
       </div>
     </main>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/main
