@@ -18,7 +18,7 @@ def get_db():
     return client[MONGODB_DB]
 
 
-<<<<<<< HEAD
+
 def _fallback_csv_records(path: Path):
     if not path.exists():
         return []
@@ -46,8 +46,7 @@ def _fallback_csv_records(path: Path):
         return []
 
 
-=======
->>>>>>> origin/main
+
 def refresh_terrain():
     db = get_db()
     collection = db["terrain_hazard"]
@@ -119,7 +118,7 @@ def refresh_terrain():
 def get_latest_terrain():
     db = get_db()
 
-<<<<<<< HEAD
+
     records = list(
         db["terrain_hazard"]
         .find({}, {"_id": 0})
@@ -137,10 +136,4 @@ def get_latest_terrain():
     )
     fallback_records = _fallback_csv_records(fallback_path)
     return fallback_records[:20] if fallback_records else []
-=======
-    return list(
-        db["terrain_hazard"]
-        .find({}, {"_id": 0})
-        .limit(20)
-    )
->>>>>>> origin/main
+

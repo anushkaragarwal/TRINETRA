@@ -55,7 +55,7 @@ app = FastAPI(title="TRINETRA API")
 
 app.add_middleware(
     CORSMiddleware,
-<<<<<<< HEAD
+
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
@@ -63,9 +63,7 @@ app.add_middleware(
         "http://[::1]:3000",
     ],
     allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|192\.168\.\d+\.\d+|\[::1\]):3000",
-=======
-    allow_origins=["http://localhost:3000"],
->>>>>>> origin/main
+
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -390,7 +388,7 @@ def trinetra_result():
             row.get("trinetra_hazard_score_0_100")
         )
 
-<<<<<<< HEAD
+
         if final_score is None:
             component_scores = []
             if river_score is not None:
@@ -413,8 +411,7 @@ def trinetra_result():
                         2,
                     )
 
-=======
->>>>>>> origin/main
+
         # ----------------------------------------------------
         # COMPONENT LEVELS
         # ----------------------------------------------------
@@ -459,7 +456,7 @@ def trinetra_result():
             "UNKNOWN",
         )
 
-<<<<<<< HEAD
+
         if final_level in {"UNKNOWN", ""} and final_score is not None:
             if final_score >= 80:
                 final_level = "CRITICAL"
@@ -470,8 +467,7 @@ def trinetra_result():
             else:
                 final_level = "LOW"
 
-=======
->>>>>>> origin/main
+
         satellite_class = clean_string(
             row.get(
                 "satellite_evidence_class",

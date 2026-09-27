@@ -34,7 +34,7 @@ def _clean_number(value):
         return None
 
 
-<<<<<<< HEAD
+
 def _fallback_settlement_risk(limit: int = 8):
     output_file = BASE_DIR / "data" / "outputs" / "habitation_risk_priority.csv"
     if not output_file.exists():
@@ -97,8 +97,7 @@ def _fallback_settlement_risk(limit: int = 8):
     return rows
 
 
-=======
->>>>>>> origin/main
+
 def _load_settlement_locations():
     """Use coordinates already matched to settlement IDs in safe_sites.csv.
 
@@ -152,12 +151,11 @@ def _load_settlement_locations():
 
 
 def _load_river_index():
-<<<<<<< HEAD
+
     if not RIVER_FILE.exists():
         return None, None
 
-=======
->>>>>>> origin/main
+
     df = pd.read_csv(RIVER_FILE)
 
     lat_col = "Latitude" if "Latitude" in df.columns else "lat"
@@ -178,12 +176,11 @@ def _load_river_index():
 
 
 def _load_terrain_index():
-<<<<<<< HEAD
+
     if not TERRAIN_FILE.exists():
         return None, None
 
-=======
->>>>>>> origin/main
+
     df = pd.read_csv(
         TERRAIN_FILE,
         usecols=["lat", "lon", "terrain_hazard_score"],
@@ -198,7 +195,7 @@ def _load_terrain_index():
 
 
 def get_settlement_risk(limit: int = 8):
-<<<<<<< HEAD
+
     if not POPULATION_FILE.exists() or not SAFE_SITES_FILE.exists():
         fallback = _fallback_settlement_risk(limit)
         if fallback:
@@ -228,11 +225,7 @@ def get_settlement_risk(limit: int = 8):
                 "message": "No settlement coordinates are available from matched safe-site records; fallback to habitation-risk output.",
             }
 
-=======
-    settlements = _load_settlement_locations()
 
-    if settlements.empty:
->>>>>>> origin/main
         return {
             "status": "ok",
             "count": 0,
@@ -242,7 +235,7 @@ def get_settlement_risk(limit: int = 8):
 
     # Rainfall is a corridor-level signal in the current pipeline, so it is
     # applied consistently to each settlement, just as /api/trinetra does.
-<<<<<<< HEAD
+
     if not RAINFALL_FILE.exists():
         rainfall_score = 0.0
     else:
@@ -251,13 +244,7 @@ def get_settlement_risk(limit: int = 8):
             rainfall.get("hybrid_hazard_score"), errors="coerce"
         ).dropna()
         rainfall_score = float(rainfall_scores.max()) if not rainfall_scores.empty else 0.0
-=======
-    rainfall = pd.read_csv(RAINFALL_FILE)
-    rainfall_scores = pd.to_numeric(
-        rainfall.get("hybrid_hazard_score"), errors="coerce"
-    ).dropna()
-    rainfall_score = float(rainfall_scores.max()) if not rainfall_scores.empty else 0.0
->>>>>>> origin/main
+
 
     river_tree, river_df = _load_river_index()
     terrain_tree, terrain_df = _load_terrain_index()

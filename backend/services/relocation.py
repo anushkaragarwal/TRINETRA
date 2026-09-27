@@ -20,7 +20,7 @@ def get_db():
     return client[MONGODB_DB]
 
 
-<<<<<<< HEAD
+
 def _fallback_csv_records(file_path: Path):
     if not file_path.exists():
         return []
@@ -37,8 +37,7 @@ def _fallback_csv_records(file_path: Path):
     return df.to_dict(orient="records")
 
 
-=======
->>>>>>> origin/main
+
 def load_csv(collection_name, file_path):
     db = get_db()
     collection = db[collection_name]
@@ -99,7 +98,7 @@ def load_csv(collection_name, file_path):
 
 def refresh_relocation_data():
     datasets = [
-<<<<<<< HEAD
+
         ("population", BASE_DIR / "data/population/population.csv"),
         ("safe_sites", BASE_DIR / "data/features/safe_sites.csv"),
         ("relocation_assignments", BASE_DIR / "data/features/relocation_assignments.csv"),
@@ -110,18 +109,7 @@ def refresh_relocation_data():
         ("shelters", BASE_DIR / "data/infrastructure/shelters.csv"),
         ("hospitals", BASE_DIR / "data/health/health_facilities_final.csv"),
         ("emergency_capabilities", BASE_DIR / "data/health/emergency_capabilities.csv"),
-=======
-        ("population", BASE_DIR / "data/features/population_master.csv"),
-        ("safe_sites", BASE_DIR / "data/features/safe_sites.csv"),
-        ("relocation_assignments", BASE_DIR / "data/features/relocation_assignments.csv"),
-        ("relocation_recommendations", BASE_DIR / "data/features/relocation_recommendations.csv"),
-        ("final_relocation_plan", BASE_DIR / "data/features/final_relocation_plan.csv"),
-        ("roads", BASE_DIR / "data/infrastructure/roads.csv"),
-        ("bridges", BASE_DIR / "data/infrastructure/bridges.csv"),
-        ("shelters", BASE_DIR / "data/infrastructure/shelters.csv"),
-        ("hospitals", BASE_DIR / "data/health/health_facilities_final.csv")
-        
->>>>>>> origin/main
+
     ]
 
     results = [
@@ -137,12 +125,9 @@ def refresh_relocation_data():
 
 def get_relocation_summary():
     db = get_db()
-<<<<<<< HEAD
-    summary = {
-=======
 
-    return {
->>>>>>> origin/main
+    summary = {
+
         "population": db["population"].count_documents({}),
         "safe_sites": db["safe_sites"].count_documents({}),
         "relocation_assignments": db["relocation_assignments"].count_documents({}),
@@ -155,7 +140,7 @@ def get_relocation_summary():
         "emergency_capabilities": db["emergency_capabilities"].count_documents({}),
     }
 
-<<<<<<< HEAD
+
     fallback_paths = {
         "population": BASE_DIR / "data" / "population" / "population.csv",
         "safe_sites": BASE_DIR / "data" / "outputs" / "habitation_risk_priority.csv",
@@ -250,20 +235,7 @@ def get_safe_sites(limit=2000):
     if not records:
         records = _fallback_safe_sites(limit)
         total_count = len(records)
-=======
-def get_safe_sites(limit=2000):
-    db = get_db()
 
-    # Return the complete screened site dataset (currently ~1k records).
-    # The frontend sorts/renders the returned records; Mongo remains the
-    # source of truth for the site values.
-    records = list(
-        db["safe_sites"]
-        .find({}, {"_id": 0})
-        .sort("safe_site_score", -1)
-        .limit(limit)
-    )
->>>>>>> origin/main
 
     high = 0
     medium = 0
@@ -297,11 +269,9 @@ def get_safe_sites(limit=2000):
     return {
         "status": "ok",
         "count": len(records),
-<<<<<<< HEAD
+
         "total_count": total_count,
-=======
-        "total_count": db["safe_sites"].count_documents({}),
->>>>>>> origin/main
+
         "sites": records,
         "summary": {
             "total_sites": len(records),
@@ -327,13 +297,12 @@ def get_top_relocations(limit=20):
         .limit(limit)
     )
 
-<<<<<<< HEAD
+
     if not records:
         fallback_path = BASE_DIR / "data" / "outputs" / "relocation_plan.csv"
         records = _fallback_csv_records(fallback_path)[:limit]
 
-=======
->>>>>>> origin/main
+
     return {
         "status": "ok",
         "count": len(records),
@@ -410,7 +379,7 @@ def get_relocation_decisions(limit=20):
         .limit(limit)
     )
 
-<<<<<<< HEAD
+
     if not relocations:
         fallback_path = BASE_DIR / "data" / "outputs" / "relocation_plan.csv"
         relocations = _fallback_csv_records(fallback_path)[:limit]
@@ -418,16 +387,12 @@ def get_relocation_decisions(limit=20):
     results = []
 
     for idx, item in enumerate(relocations):
-=======
-    results = []
 
-    for item in relocations:
->>>>>>> origin/main
         lat = item.get("destination_latitude")
         lon = item.get("destination_longitude")
 
         if lat is None or lon is None:
-<<<<<<< HEAD
+
             lat = item.get("latitude")
             lon = item.get("longitude")
 
@@ -438,9 +403,7 @@ def get_relocation_decisions(limit=20):
             lon = anchor_lon + ((idx // 5) - 1) * 0.006
             item["destination_latitude"] = lat
             item["destination_longitude"] = lon
-=======
-            continue
->>>>>>> origin/main
+
 
         road = nearest_facility(db, "roads", lat, lon)
         bridge = nearest_facility(db, "bridges", lat, lon)
@@ -461,15 +424,10 @@ def get_relocation_decisions(limit=20):
             )
         }
 
-<<<<<<< HEAD
+
         road_ok = road is not None and road["distance_km"] <= 2
         hospital_ok = hospital is not None and hospital["distance_km"] <= 25
-=======
-        # Simple emergency accessibility assessment
-        road_ok = road is not None and road["distance_km"] <= 2
-        hospital_ok = hospital is not None and hospital["distance_km"] <= 25
-        bridge_ok = bridge is not None and bridge["distance_km"] <= 10
->>>>>>> origin/main
+
 
         if road_ok and hospital_ok:
             access_status = "GOOD"
