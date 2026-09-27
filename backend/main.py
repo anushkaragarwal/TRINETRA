@@ -55,7 +55,13 @@ app = FastAPI(title="TRINETRA API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://0.0.0.0:3000",
+        "http://[::1]:3000",
+    ],
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|192\.168\.\d+\.\d+|\[::1\]):3000",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -380,6 +386,28 @@ def trinetra_result():
             row.get("trinetra_hazard_score_0_100")
         )
 
+        if final_score is None:
+            component_scores = []
+            if river_score is not None:
+                component_scores.append((river_score, 0.40))
+            if rainfall_score is not None:
+                component_scores.append((rainfall_score, 0.30))
+            if terrain_score is not None:
+                component_scores.append((terrain_score, 0.30))
+
+            if component_scores:
+                weighted_total = sum(
+                    score * weight for score, weight in component_scores
+                )
+                weight_total = sum(
+                    weight for _, weight in component_scores
+                )
+                if weight_total > 0:
+                    final_score = round(
+                        weighted_total / weight_total,
+                        2,
+                    )
+
         # ----------------------------------------------------
         # COMPONENT LEVELS
         # ----------------------------------------------------
@@ -423,6 +451,16 @@ def trinetra_result():
             ),
             "UNKNOWN",
         )
+
+        if final_level in {"UNKNOWN", ""} and final_score is not None:
+            if final_score >= 80:
+                final_level = "CRITICAL"
+            elif final_score >= 60:
+                final_level = "HIGH"
+            elif final_score >= 30:
+                final_level = "MODERATE"
+            else:
+                final_level = "LOW"
 
         satellite_class = clean_string(
             row.get(

@@ -18,6 +18,33 @@ def get_db():
     return client[MONGODB_DB]
 
 
+def _fallback_csv_records(path: Path):
+    if not path.exists():
+        return []
+
+    try:
+        with open(path, "r", encoding="utf-8", errors="ignore", newline="") as f:
+            reader = csv.DictReader(f)
+            rows = []
+            for row in reader:
+                cleaned = {}
+                for key, value in row.items():
+                    if key is None:
+                        continue
+                    value = value.strip() if isinstance(value, str) else value
+                    if value == "":
+                        cleaned[key] = None
+                        continue
+                    try:
+                        cleaned[key] = float(value)
+                    except (ValueError, TypeError):
+                        cleaned[key] = value
+                rows.append(cleaned)
+            return rows
+    except Exception:
+        return []
+
+
 def refresh_terrain():
     db = get_db()
     collection = db["terrain_hazard"]
@@ -89,8 +116,20 @@ def refresh_terrain():
 def get_latest_terrain():
     db = get_db()
 
-    return list(
+    records = list(
         db["terrain_hazard"]
         .find({}, {"_id": 0})
         .limit(20)
     )
+
+    if records:
+        return records
+
+    fallback_path = (
+        BASE_DIR
+        / "data"
+        / "features"
+        / "dem_integrated_features.csv"
+    )
+    fallback_records = _fallback_csv_records(fallback_path)
+    return fallback_records[:20] if fallback_records else []

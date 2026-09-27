@@ -18,6 +18,22 @@ def get_db():
     return client[MONGODB_DB]
 
 
+def _fallback_csv_records(path: Path):
+    if not path.exists():
+        return []
+
+    try:
+        df = pd.read_csv(path)
+    except Exception:
+        return []
+
+    if df.empty:
+        return []
+
+    df = df.astype(object).where(pd.notna(df), None)
+    return df.to_dict(orient="records")
+
+
 def refresh_river():
     db = get_db()
     collection = db["river_hazard"]
@@ -60,8 +76,21 @@ def refresh_river():
 def get_latest_river():
     db = get_db()
 
-    return list(
+    records = list(
         db["river_hazard"]
         .find({}, {"_id": 0})
         .limit(20)
     )
+
+    if records:
+        return records
+
+    fallback_path = (
+        BASE_DIR
+        / "data"
+        / "river"
+        / "processed"
+        / "river_hybrid_hazard.csv"
+    )
+    fallback_records = _fallback_csv_records(fallback_path)
+    return fallback_records[:20] if fallback_records else []
