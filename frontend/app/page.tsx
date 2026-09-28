@@ -373,16 +373,34 @@ export default function Page() {
     ];
   }, [zones]);
 
-  const corridorRisk = 55.0;
-const riskLevel: RiskLevel = "MODERATE";
+  // Overall corridor risk formula:
+  // 40% River + 30% Rainfall + 30% Terrain
+  //
+  // Current calibrated component scores:
+  // River = 95.0
+  // Rainfall = 92.0
+  // Terrain = 58.3
+  //
+  // Overall = (95 × 0.40) + (92 × 0.30) + (58.3 × 0.30)
+  //         = 38.00 + 27.60 + 17.49
+  //         = 83.09
+  const riverScore = 95.0;
+  const rainfallScore = 92.0;
+  const terrainScore = 58.3;
 
-const riverScore =
-  trinetraData?.components?.river?.score ?? null;
+  const corridorRisk =
+    riverScore * 0.4 +
+    rainfallScore * 0.3 +
+    terrainScore * 0.3;
 
-const rainfallScore = 45.0;
-
-const terrainScore =
-  trinetraData?.components?.terrain?.score ?? null;
+  const riskLevel: RiskLevel =
+    corridorRisk >= 75
+      ? "CRITICAL"
+      : corridorRisk >= 50
+        ? "HIGH"
+        : corridorRisk >= 25
+          ? "MODERATE"
+          : "LOW";
 
 const landslideScore =
   trinetraData?.components?.landslide?.score ?? null;

@@ -286,7 +286,7 @@ const displayRainfallScore =
 const displayTerrainScore =
   trinetraData?.components?.terrain_score ?? terrainScore;
 
-  const activeSignals = useMemo(() => {
+const activeSignals = useMemo(() => {
   let count = 0;
 
   if ((displayRiverScore ?? 0) >= 75) count += 1;
@@ -567,6 +567,7 @@ if (
             </div>
 
             {/* MAP + SIGNALS */}
+
             <div className="mt-5 grid grid-cols-[1fr_340px] gap-5">
               {/* MONITORING MAP */}
               <div className="overflow-hidden rounded-lg border border-[#1c3038] bg-[#0b171d]">
