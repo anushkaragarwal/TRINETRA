@@ -202,7 +202,6 @@ function formatTime(value: unknown) {
 export default function DataSourcesPage() {
   const [hazards, setHazards] = useState<HazardResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
   async function loadSources() {
@@ -224,28 +223,6 @@ export default function DataSourcesPage() {
       );
     } finally {
       setLoading(false);
-      setRefreshing(false);
-    }
-  }
-
-  async function refreshSources() {
-    setRefreshing(true);
-
-    try {
-      const response = await fetch("http://127.0.0.1:8000/api/refresh", {
-        method: "POST",
-      });
-
-      if (!response.ok) {
-        throw new Error(`Refresh failed with ${response.status}`);
-      }
-
-      await loadSources();
-    } catch {
-      setError(
-        "Source refresh failed. Check the FastAPI and MongoDB connection."
-      );
-      setRefreshing(false);
     }
   }
 
@@ -270,33 +247,6 @@ export default function DataSourcesPage() {
       countRecords(hazards.terrain)
     );
   }, [hazards]);
-
-  const feedRows = [
-    {
-      name: "River / Hydrology",
-      source: "CWC River Telemetry",
-      records: countRecords(hazards?.river),
-      latest: hazards?.river?.[0] as Record<string, unknown> | undefined,
-    },
-    {
-      name: "Rainfall",
-      source: "TRINETRA Rainfall Pipeline",
-      records: countRecords(hazards?.rainfall),
-      latest: hazards?.rainfall?.[0] as Record<string, unknown> | undefined,
-    },
-    {
-      name: "Satellite",
-      source: "Copernicus Sentinel-1",
-      records: countRecords(hazards?.satellite),
-      latest: hazards?.satellite?.[0] as Record<string, unknown> | undefined,
-    },
-    {
-      name: "Terrain",
-      source: "DEM Terrain Pipeline",
-      records: countRecords(hazards?.terrain),
-      latest: hazards?.terrain?.[0] as Record<string, unknown> | undefined,
-    },
-  ];
 
   return (
     <main className="min-h-screen bg-[#081016] text-white">
@@ -491,73 +441,6 @@ export default function DataSourcesPage() {
                         →
                       </span>
                     )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-5 rounded-lg border border-[#1c3038] bg-[#0d1920]">
-              <div className="flex items-center justify-between border-b border-[#1c3038] px-4 py-4">
-                <div>
-                  <h3 className="text-sm font-medium">Live Feed Status</h3>
-                  <p className="mt-1 text-[10px] text-slate-500">
-                    Actual records currently exposed by the TRINETRA API
-                  </p>
-                </div>
-
-                <button
-                  onClick={refreshSources}
-                  disabled={refreshing}
-                  className="rounded border border-[#293d44] px-3 py-1.5 text-[10px] text-slate-400 hover:bg-white/5 hover:text-white disabled:opacity-50"
-                >
-                  {refreshing ? "REFRESHING..." : "REFRESH DATA"}
-                </button>
-              </div>
-
-              <div className="grid grid-cols-4 gap-3 p-4">
-                {feedRows.map((feed) => (
-                  <div
-                    key={feed.name}
-                    className="rounded-md border border-[#1c3038] bg-[#0a151b] p-4"
-                  >
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs font-medium text-slate-200">
-                        {feed.name}
-                      </p>
-                      <span
-                        className={`h-2 w-2 rounded-full ${
-                          feed.records > 0 ? "bg-emerald-400" : "bg-orange-400"
-                        }`}
-                      />
-                    </div>
-
-                    <p className="mt-2 text-[10px] text-slate-500">
-                      {feed.source}
-                    </p>
-
-                    <p className="mt-4 text-2xl font-semibold text-cyan-300">
-                      {loading ? "—" : feed.records.toLocaleString()}
-                    </p>
-
-                    <p className="mt-1 text-[9px] uppercase tracking-wider text-slate-600">
-                      records returned
-                    </p>
-
-                    <div className="mt-4 border-t border-[#1c3038] pt-3">
-                      <p className="text-[9px] uppercase tracking-wider text-slate-600">
-                        Latest observation
-                      </p>
-                      <p className="mt-1 text-[10px] text-slate-400">
-                        {loading
-                          ? "Checking..."
-                          : formatTime(
-                              feed.latest?.["Data Acquisition Time"] ??
-                                feed.latest?.["date"] ??
-                                feed.latest?.["timestamp"] ??
-                                feed.latest?.["ContentDate"]
-                            )}
-                      </p>
-                    </div>
                   </div>
                 ))}
               </div>

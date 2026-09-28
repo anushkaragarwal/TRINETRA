@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const FALLBACK_DATE = "2026-08-19T16:10:00+05:30";
 
 type RiskLevel = "CRITICAL" | "HIGH" | "MODERATE" | "LOW" | string;
 
@@ -103,7 +104,7 @@ type EventEvidence = {
 const DEFAULT_EVENT_EVIDENCE: EventEvidence = {
   event_id: "lambagarh_2026_07_17",
   station: "Lambagarh river station",
-  event_time: "2026-07-17 18:30",
+  event_time: "2026-08-19 16:10:00+05:30",
   latitude: 30.66472222,
   longitude: 79.5175,
   hydrological_risk_score: 95,
@@ -163,6 +164,7 @@ function formatDate(value?: string | null) {
   if (Number.isNaN(date.getTime())) return value;
 
   return date.toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -464,7 +466,7 @@ if (
               <div className="text-right">
                 <p className="text-[10px] text-slate-500">LAST DATA LOAD</p>
                 <p className="text-xs text-slate-300">
-10 Sept 2026, 03:00
+{formatDate(FALLBACK_DATE)}
                 </p>
               </div>
 
@@ -1002,7 +1004,7 @@ latestRainfall?.["Daily Departure Per"] !== null
                   </p>
 
                   <p className="mt-1 text-xs text-slate-300">
-                    {eventEvidence?.event_time ? formatDate(eventEvidence.event_time) : "—"}
+                    {formatDate(eventEvidence?.event_time || FALLBACK_DATE)}
                   </p>
                 </div>
               </div>
@@ -1098,7 +1100,7 @@ latestRainfall?.["Daily Departure Per"] !== null
                 <div className="text-right">
                   <p className="text-[9px] uppercase text-slate-600">Event</p>
                   <p className="mt-1 text-xs text-slate-300">
-                    {eventEvidence?.event_time ? formatDate(eventEvidence.event_time) : "—"}
+                    {formatDate(eventEvidence?.event_time || FALLBACK_DATE)}
                   </p>
                 </div>
               </div>

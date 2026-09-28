@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 const API_BASE = "http://127.0.0.1:8000";
+const FALLBACK_DATE = "2026-08-19T16:10:00+05:30";
 
 type RiskLevel = "CRITICAL" | "HIGH" | "MODERATE" | "LOW" | string;
 
@@ -105,6 +106,7 @@ function formatDate(value?: string | null) {
   if (Number.isNaN(date.getTime())) return value;
 
   return date.toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -391,7 +393,7 @@ export default function RiskPage() {
     },
   ].filter((factor) => factor.score !== null);
 
-  const latestDataTimestamp = "2026-09-15T22:00:00";
+  const latestDataTimestamp = updatedAt || FALLBACK_DATE;
 
   return (
     <main className="min-h-screen bg-[#081016] text-white">
